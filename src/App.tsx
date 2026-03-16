@@ -580,20 +580,31 @@ export default function App() {
         {/* Dashboard Sections */}
         <div className="col-span-12 lg:col-span-9 space-y-6">
           {/* Tabs */}
-          <div className="flex gap-1 p-1 bg-slate-200/50 rounded-xl w-fit">
+          <div className="flex gap-1 p-1 bg-slate-200/50 rounded-xl w-full overflow-x-auto no-scrollbar">
             <button 
               onClick={() => setActiveTab('feed')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
                 activeTab === 'feed' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
               Live Threat Feed
             </button>
             <button 
+              onClick={() => setActiveTab('audit')}
+              className={cn(
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                activeTab === 'audit' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Vulnerability Audit
+              <span className="px-1.5 py-0.5 bg-banking-blue text-white text-[10px] rounded-full uppercase tracking-wider font-bold">SHIELD</span>
+            </button>
+            <button 
               onClick={() => setActiveTab('compliance')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
                 activeTab === 'compliance' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
@@ -602,7 +613,7 @@ export default function App() {
             <button 
               onClick={() => setActiveTab('behavior')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
                 activeTab === 'behavior' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
@@ -611,7 +622,7 @@ export default function App() {
             <button 
               onClick={() => setActiveTab('sandbox')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                 activeTab === 'sandbox' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
@@ -621,7 +632,7 @@ export default function App() {
             <button 
               onClick={() => setActiveTab('fairness')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                 activeTab === 'fairness' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
@@ -630,22 +641,11 @@ export default function App() {
             <button 
               onClick={() => setActiveTab('integrations')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
                 activeTab === 'integrations' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
               SIEM Integrations
-            </button>
-            <button 
-              onClick={() => setActiveTab('audit')}
-              className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
-                activeTab === 'audit' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              Vulnerability Audit
-              <span className="px-1.5 py-0.5 bg-banking-blue text-white text-[10px] rounded-full uppercase tracking-wider font-bold">SHIELD</span>
             </button>
           </div>
 
