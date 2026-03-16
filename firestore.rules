@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: audit_logs
+    // Fields:
+    //   - client_name: string (required)
+    //   - source_type: string (required)
+    //   - input_text: string (required, max 5000 chars)
+    //   - threat_category: string (required)
+    //   - compliance_tag: string (required)
+    //   - risk_score: number (required, 0-1)
+    //   - is_blocked: bool (required)
+    //   - created_at: timestamp (required)
+    //   - uid: string (optional, owner)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "kingnarmer702@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidAuditLog(data) {
+      return hasRequiredFields(['client_name', 'source_type', 'input_text', 'threat_category', 'compliance_tag', 'risk_score', 'is_blocked', 'created_at']) &&
+             hasOnlyAllowedFields(['client_name', 'source_type', 'input_text', 'threat_category', 'compliance_tag', 'risk_score', 'is_blocked', 'created_at', 'uid']) &&
+             data.client_name is string && data.client_name.size() > 0 && data.client_name.size() < 100 &&
+             data.source_type is string &&
+             data.input_text is string && data.input_text.size() < 5000 &&
+             data.threat_category is string &&
+             data.compliance_tag is string &&
+             data.risk_score is number && data.risk_score >= 0 && data.risk_score <= 1 &&
+             data.is_blocked is bool &&
+             data.created_at is timestamp;
+    }
+
+    match /audit_logs/{logId} {
+      // Admins can read all logs. Users can only read their own logs if they have a uid.
+      // For this specific app, we might want admins to see everything.
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
+      
+      // Anyone authenticated can create a log (e.g. when they interact with the AI)
+      allow create: if isAuthenticated() && isValidAuditLog(request.resource.data) && 
+                    (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
+      
+      // Only admins can update or delete logs
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(userId) && request.resource.data.role == 'user';
+      allow update: if isAdmin(); // Only admins can change roles
+    }
+  }
+}

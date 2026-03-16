@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "A security event log entry",
+      "type": "object",
+      "properties": {
+        "client_name": { "type": "string", "description": "Name of the client application" },
+        "source_type": { "type": "string", "description": "Source of the interaction (e.g., User, System)" },
+        "input_text": { "type": "string", "description": "The text input that was analyzed" },
+        "threat_category": { "type": "string", "description": "Category of threat detected" },
+        "compliance_tag": { "type": "string", "description": "Compliance framework tag" },
+        "risk_score": { "type": "number", "description": "Risk score from 0 to 1" },
+        "is_blocked": { "type": "boolean", "description": "Whether the request was blocked" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Timestamp of the event" },
+        "uid": { "type": "string", "description": "User ID of the person who triggered the event" }
+      },
+      "required": ["client_name", "source_type", "input_text", "threat_category", "compliance_tag", "risk_score", "is_blocked", "created_at"]
+    }
+  },
+  "firestore": {
+    "audit_logs": {
+      "schema": "AuditLog",
+      "description": "Collection of security audit logs"
+    }
+  }
+}
