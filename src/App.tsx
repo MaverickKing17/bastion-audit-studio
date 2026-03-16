@@ -106,9 +106,36 @@ export default function App() {
     aida_percent: 100
   });
   const [behavior, setBehavior] = useState<BehaviorData | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior' | 'sandbox' | 'fairness' | 'integrations'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior' | 'sandbox' | 'fairness' | 'integrations' | 'audit'>('feed');
   const [isKilled, setIsKilled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isGeneratingAudit, setIsGeneratingAudit] = useState(false);
+  const [auditReport, setAuditReport] = useState<any>(null);
+
+  const generate30DayAudit = () => {
+    setIsGeneratingAudit(true);
+    setAuditReport(null);
+    
+    setTimeout(() => {
+      setAuditReport({
+        period: "Last 30 Days",
+        totalInteractions: 14520,
+        threatsBlocked: 284,
+        criticalVulnerabilities: [
+          { type: 'Prompt Injection', count: 42, trend: '+5%' },
+          { type: 'PII Leakage', count: 12, trend: '-15%' },
+          { type: 'Jailbreak Attempts', count: 8, trend: 'Stable' }
+        ],
+        complianceScore: 98.4,
+        recommendations: [
+          "Rotate API keys for 'Customer Support Bot' due to repeated PII probing.",
+          "Update Lakera Guard filters to include new 'DeepSeek' jailbreak patterns.",
+          "Conduct mandatory AI safety training for the 'Toronto Wealth Mgmt' team."
+        ]
+      });
+      setIsGeneratingAudit(false);
+    }, 4000);
+  };
   const [selectedClient, setSelectedClient] = useState('All Departments');
   const [notifications, setNotifications] = useState(3);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -608,6 +635,17 @@ export default function App() {
               )}
             >
               SIEM Integrations
+            </button>
+            <button 
+              onClick={() => setActiveTab('audit')}
+              className={cn(
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                activeTab === 'audit' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Vulnerability Audit
+              <span className="px-1.5 py-0.5 bg-banking-blue text-white text-[10px] rounded-full uppercase tracking-wider font-bold">SHIELD</span>
             </button>
           </div>
 
@@ -1273,6 +1311,184 @@ export default function App() {
                         <ShieldCheck className="w-24 h-24" />
                       </div>
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : activeTab === 'audit' ? (
+              <motion.div 
+                key="audit"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-8"
+              >
+                {/* SHIELD Header */}
+                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                  <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+                    <ShieldCheck className="w-64 h-64" />
+                  </div>
+                  <div className="relative z-10 max-w-2xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-banking-blue rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+                      SHIELD Protocol Active
+                    </div>
+                    <h2 className="text-4xl font-bold mb-4 tracking-tight">30-Day AI Vulnerability Audit</h2>
+                    <p className="text-lg text-white/70 font-medium leading-relaxed mb-8">
+                      A comprehensive deep-dive into your AI infrastructure, analyzing 30 days of interaction data to identify structural weaknesses, compliance gaps, and adversarial risks.
+                    </p>
+                    <button 
+                      onClick={generate30DayAudit}
+                      disabled={isGeneratingAudit}
+                      className="px-8 py-4 bg-white text-slate-900 rounded-2xl font-bold text-base hover:bg-slate-100 transition-all shadow-xl shadow-white/10 flex items-center gap-3 active:scale-95 disabled:opacity-50"
+                    >
+                      {isGeneratingAudit ? (
+                        <>
+                          <span className="w-5 h-5 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin" />
+                          Analyzing 30-Day Dataset...
+                        </>
+                      ) : (
+                        <>
+                          <Activity className="w-5 h-5" />
+                          Generate Full Audit Report
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Technical Breakdown */}
+                  <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                    <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                      <Cpu className="w-6 h-6 text-banking-blue" />
+                      Technical Breakdown
+                    </h3>
+                    <div className="space-y-6">
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0">
+                          <Shield className="w-6 h-6 text-banking-blue" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 mb-1">Lakera Guard Integration</h4>
+                          <p className="text-sm text-slate-500 leading-relaxed">
+                            Real-time prompt injection and jailbreak detection using Lakera's world-class adversarial database.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0">
+                          <Activity className="w-6 h-6 text-emerald-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 mb-1">Behavioral Anomaly Engine</h4>
+                          <p className="text-sm text-slate-500 leading-relaxed">
+                            Proprietary algorithms detecting volume deviations, temporal shifts, and sensitive probing patterns.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 shrink-0">
+                          <Database className="w-6 h-6 text-amber-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-800 mb-1">Immutable Audit Trail</h4>
+                          <p className="text-sm text-slate-500 leading-relaxed">
+                            Every interaction is hashed and stored in a SOC2-compliant Supabase backend for regulatory transparency.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Architecture Flow</h4>
+                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center">AI Agent</div>
+                          <span>INPUT</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4" />
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-10 bg-banking-blue text-white rounded-lg flex items-center justify-center">BASTION</div>
+                          <span>AUDIT</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4" />
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center">SIEM</div>
+                          <span>ALERT</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Audit Results */}
+                  <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                    <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                      <BarChart3 className="w-6 h-6 text-banking-blue" />
+                      Audit Findings
+                    </h3>
+                    
+                    {!auditReport ? (
+                      <div className="h-[400px] flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <History className="w-12 h-12 text-slate-200 mb-4" />
+                        <p className="text-slate-400 font-medium">
+                          No audit report generated yet. Click the button above to analyze your 30-day interaction history.
+                        </p>
+                      </div>
+                    ) : (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="space-y-6"
+                      >
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total Interactions</p>
+                            <p className="text-2xl font-bold text-slate-900">{auditReport.totalInteractions.toLocaleString()}</p>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Threats Blocked</p>
+                            <p className="text-2xl font-bold text-rose-600">{auditReport.threatsBlocked}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Critical Vulnerabilities</h4>
+                          {auditReport.criticalVulnerabilities.map((vuln: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                              <span className="text-sm font-bold text-slate-700">{vuln.type}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm font-bold text-slate-900">{vuln.count}</span>
+                                <span className={cn(
+                                  "text-[10px] font-bold px-2 py-0.5 rounded",
+                                  vuln.trend.includes('+') ? "bg-rose-100 text-rose-600" : vuln.trend.includes('-') ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500"
+                                )}>
+                                  {vuln.trend}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Strategic Recommendations</h4>
+                          <div className="space-y-2">
+                            {auditReport.recommendations.map((rec: string, i: number) => (
+                              <div key={i} className="flex gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                <span>{rec}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={() => alert("Downloading PDF Audit Report...")}
+                          className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download Full PDF Audit
+                        </button>
+                      </motion.div>
+                    )}
                   </div>
                 </div>
               </motion.div>
