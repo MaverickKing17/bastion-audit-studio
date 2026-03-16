@@ -152,11 +152,12 @@ async function startServer() {
             },
           ]);
 
-          if (error) {
-            console.error("Supabase Log Error:", JSON.stringify(error, null, 2));
-            // Fallback to in-memory if Supabase fails
-            mockLogs.unshift(logEntry);
-          }
+      if (error) {
+        const errorMsg = error.message || JSON.stringify(error);
+        console.error(`Supabase Log Error: ${errorMsg}`);
+        // Fallback to in-memory if Supabase fails
+        mockLogs.unshift(logEntry);
+      }
         } else {
           // No Supabase configured, use in-memory
           mockLogs.unshift(logEntry);
@@ -187,7 +188,11 @@ async function startServer() {
         .limit(10);
 
       if (error) {
-        console.error("Supabase Fetch Error:", JSON.stringify(error, null, 2));
+        const errorMsg = error.message || JSON.stringify(error);
+        console.error(`Supabase Fetch Error: ${errorMsg}`);
+        if (errorMsg.includes("relation") && errorMsg.includes("does not exist")) {
+          console.warn("HINT: The 'audit_logs' table might be missing. See the SQL schema in server.ts comments to set it up.");
+        }
         data = mockLogs.slice(0, 10);
       } else {
         data = dbData || [];
@@ -209,7 +214,7 @@ async function startServer() {
         .select("is_blocked, compliance_tag");
 
       if (error) {
-        console.error("Supabase Stats Error:", JSON.stringify(error, null, 2));
+        console.error(`Supabase Stats Error: ${error.message || JSON.stringify(error)}`);
         data = mockLogs;
       } else {
         data = dbData || [];
@@ -250,7 +255,7 @@ async function startServer() {
       const { data: dbData, error } = await query.limit(100);
 
       if (error) {
-        console.error("Supabase Behavior Error:", JSON.stringify(error, null, 2));
+        console.error(`Supabase Behavior Error: ${error.message || JSON.stringify(error)}`);
         data = mockLogs.filter(l => client === 'All Departments' || l.client_name === client).slice(0, 100);
       } else {
         data = dbData || [];
