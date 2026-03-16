@@ -146,18 +146,35 @@ export default function App() {
     setIsAnalyzing(true);
     setSandboxResult(null);
     
-    // Simulate Lakera Guard analysis
+    // Simulate Lakera Guard analysis with advanced detection
     setTimeout(() => {
-      const isFlagged = sandboxInput.toLowerCase().includes('ignore') || 
-                        sandboxInput.toLowerCase().includes('shadow') || 
-                        sandboxInput.toLowerCase().includes('sin') ||
-                        sandboxInput.toLowerCase().includes('password');
+      const input = sandboxInput.toLowerCase();
       
+      // Advanced Jailbreak Patterns
+      const isBase64 = /^[a-zA-Z0-9+/]*={0,2}$/.test(sandboxInput.trim()) || input.includes('decode') || input.includes('base64');
+      const isPersona = input.includes('act like') || input.includes('pretend') || input.includes('grandmother') || input.includes('persona');
+      const isInjection = input.includes('ignore') || input.includes('system prompt') || input.includes('reveal') || input.includes('instructions within');
+      const isResearch = input.includes('research') || input.includes('thesis') || input.includes('educational');
+      const isPII = input.includes('sin') || input.includes('password') || input.includes('ssn') || input.includes('user entries') || input.includes('database');
+
+      const isFlagged = isBase64 || isPersona || isInjection || isResearch || isPII;
+      
+      let category = 'Safe';
+      if (isFlagged) {
+        if (isBase64) category = 'Obfuscated Injection';
+        else if (isPersona) category = 'Persona Adoption Jailbreak';
+        else if (isInjection) category = 'Prompt Injection';
+        else if (isResearch) category = 'Contextual Bypass Attempt';
+        else if (isPII) category = 'PII Leakage';
+      }
+
       setSandboxResult({
         flagged: isFlagged,
-        score: isFlagged ? 0.85 + Math.random() * 0.1 : 0.05 + Math.random() * 0.1,
-        category: isFlagged ? (sandboxInput.toLowerCase().includes('ignore') ? 'Prompt Injection' : 'PII Leakage') : 'Safe',
-        recommendation: isFlagged ? 'Block request and rotate API keys if PII was involved.' : 'Request safe to proceed.'
+        score: isFlagged ? 0.88 + Math.random() * 0.1 : 0.04 + Math.random() * 0.1,
+        category: category,
+        recommendation: isFlagged 
+          ? `Threat Detected: ${category}. Block request and flag user for review.` 
+          : 'Request safe to proceed.'
       });
       setIsAnalyzing(false);
     }, 1500);
@@ -167,7 +184,7 @@ export default function App() {
     try {
       const logsRes = await fetch('/api/audit/logs').catch(() => null);
       const statsRes = await fetch('/api/audit/stats').catch(() => null);
-      const behaviorRes = await fetch('/api/audit/behavior').catch(() => null);
+      const behaviorRes = await fetch(`/api/audit/behavior?client=${encodeURIComponent(selectedClient)}`).catch(() => null);
       
       if (logsRes && logsRes.ok) setLogs(await logsRes.json());
       if (statsRes && statsRes.ok) setStats(await statsRes.json());
@@ -183,6 +200,9 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
+  }, [selectedClient]);
+
+  useEffect(() => {
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);

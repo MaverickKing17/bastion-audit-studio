@@ -135,71 +135,145 @@ async function startServer() {
 
   // API Route: Behavior Analysis
   app.get("/api/audit/behavior", async (req, res) => {
-    const { data, error } = await supabase
+    const { client } = req.query;
+    
+    let query = supabase
       .from("audit_logs")
       .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .order("created_at", { ascending: false });
+      
+    if (client && client !== 'All Departments') {
+      query = query.eq('client_name', client);
+    }
+    
+    const { data, error } = await query.limit(100);
 
     if (error) return res.status(500).json({ error: error.message });
 
-    // Simple anomaly detection logic
-    const clientStats: Record<string, { count: number; totalRisk: number }> = {};
-    const categoryStats: Record<string, number> = {};
-    
-    data.forEach(log => {
-      // Client frequency
-      if (!clientStats[log.client_name]) clientStats[log.client_name] = { count: 0, totalRisk: 0 };
-      clientStats[log.client_name].count++;
-      clientStats[log.client_name].totalRisk += log.risk_score;
-
-      // Category frequency
-      if (log.threat_category !== "None") {
-        categoryStats[log.threat_category] = (categoryStats[log.threat_category] || 0) + 1;
-      }
-    });
-
     const anomalies = [];
+    const clientStats: Record<string, { 
+      count: number; 
+      totalRisk: number; 
+      timestamps: number[];
+      categories: Record<string, number>;
+      sensitiveKeywords: number;
+    }> = {};
+    
+    const sensitiveKeywords = ['balance', 'account', 'password', 'ssn', 'sin', 'credit', 'transfer', 'wire', 'routing', 'swift'];
 
-    // Flag 1: High frequency from one client
-    Object.entries(clientStats).forEach(([client, stats]) => {
-      if (stats.count > 10) {
-        anomalies.push({
-          type: "High Frequency",
-          severity: "Medium",
-          description: `Client "${client}" has ${stats.count} interactions in the last 50 logs.`,
-          impact: "Potential brute-force or automated probe."
-        });
+    data.forEach(log => {
+      const c = log.client_name;
+      if (!clientStats[c]) {
+        clientStats[c] = { 
+          count: 0, 
+          totalRisk: 0, 
+          timestamps: [], 
+          categories: {},
+          sensitiveKeywords: 0
+        };
       }
-      const avgRisk = stats.totalRisk / stats.count;
-      if (avgRisk > 0.6) {
-        anomalies.push({
-          type: "High Average Risk",
-          severity: "High",
-          description: `Client "${client}" maintains an average risk score of ${(avgRisk * 100).toFixed(0)}%.`,
-          impact: "Persistent malicious behavior detected."
-        });
+      
+      const stats = clientStats[c];
+      stats.count++;
+      stats.totalRisk += log.risk_score;
+      stats.timestamps.push(new Date(log.created_at).getTime());
+      
+      if (log.threat_category !== "None") {
+        stats.categories[log.threat_category] = (stats.categories[log.threat_category] || 0) + 1;
       }
+
+      const text = log.input_text.toLowerCase();
+      sensitiveKeywords.forEach(kw => {
+        if (text.includes(kw)) stats.sensitiveKeywords++;
+      });
     });
 
-    // Flag 2: Repeated specific threats
-    Object.entries(categoryStats).forEach(([category, count]) => {
-      if (count > 5) {
+    const totalClients = Object.keys(clientStats).length;
+    const avgInteractions = data.length / (totalClients || 1);
+
+    Object.entries(clientStats).forEach(([cName, stats]) => {
+      // 1. Volume Deviation (API Call Patterns)
+      if (stats.count > avgInteractions * 2.5 && stats.count > 5) {
         anomalies.push({
-          type: "Patterned Attack",
+          type: "Volume Deviation",
           severity: "High",
-          description: `Repeated "${category}" attempts detected (${count} occurrences).`,
-          impact: "Targeted exploit attempt identified."
+          description: `Client "${cName}" interaction volume is ${((stats.count / avgInteractions)).toFixed(1)}x above baseline.`,
+          impact: "Potential Denial of Service or massive data scraping attempt."
         });
+      }
+
+      // 2. Temporal Anomaly (User Interaction Baseline)
+      const offHoursCount = stats.timestamps.filter(ts => {
+        const hour = new Date(ts).getUTCHours();
+        return hour < 13 || hour > 22; // Outside 9 AM - 6 PM EST (approx)
+      }).length;
+
+      if (offHoursCount / stats.count > 0.7 && stats.count > 3) {
+        anomalies.push({
+          type: "Temporal Anomaly",
+          severity: "Medium",
+          description: `70%+ of interactions from "${cName}" occurred outside standard business hours.`,
+          impact: "Unusual user behavior; possible account takeover or unauthorized access."
+        });
+      }
+
+      // 3. Data Access Anomaly (Sensitive Probing)
+      if (stats.sensitiveKeywords > stats.count * 1.2) {
+        anomalies.push({
+          type: "Data Access Anomaly",
+          severity: "High",
+          description: `High density of sensitive financial keywords detected in requests from "${cName}".`,
+          impact: "Active probing for sensitive account information or financial data."
+        });
+      }
+
+      // 4. Risk Profile Deviation
+      const avgRisk = stats.totalRisk / stats.count;
+      if (avgRisk > 0.75) {
+        anomalies.push({
+          type: "Critical Risk Profile",
+          severity: "High",
+          description: `Client "${cName}" consistently triggers high-risk security flags.`,
+          impact: "Confirmed malicious actor or highly compromised endpoint."
+        });
+      } else if (avgRisk > 0.4) {
+        anomalies.push({
+          type: "Elevated Risk Profile",
+          severity: "Medium",
+          description: `Client "${cName}" shows a sustained moderate risk profile.`,
+          impact: "Suspicious activity requiring investigation."
+        });
+      }
+
+      // 5. Burst Pattern Detection (API Call Patterns)
+      if (stats.timestamps.length > 5) {
+        const sortedTs = [...stats.timestamps].sort((a, b) => a - b);
+        let burstCount = 0;
+        for (let i = 1; i < sortedTs.length; i++) {
+          if (sortedTs[i] - sortedTs[i-1] < 1500) burstCount++; // Less than 1.5 seconds apart
+        }
+        if (burstCount > stats.count * 0.6) {
+          anomalies.push({
+            type: "Burst Pattern Detected",
+            severity: "Medium",
+            description: `Rapid-fire API calls detected from "${cName}" (${burstCount} bursts).`,
+            impact: "Automated script or bot activity detected."
+          });
+        }
       }
     });
 
     res.json({
-      anomalies,
+      anomalies: anomalies.sort((a, b) => (a.severity === 'High' ? -1 : 1)),
       summary: {
         total_analyzed: data.length,
-        unique_clients: Object.keys(clientStats).length,
-        threat_distribution: categoryStats
+        unique_clients: totalClients,
+        threat_distribution: Object.values(clientStats).reduce((acc, curr) => {
+          Object.entries(curr.categories).forEach(([cat, count]) => {
+            acc[cat] = (acc[cat] || 0) + count;
+          });
+          return acc;
+        }, {} as Record<string, number>)
       }
     });
   });
