@@ -133,6 +133,77 @@ async function startServer() {
     });
   });
 
+  // API Route: Behavior Analysis
+  app.get("/api/audit/behavior", async (req, res) => {
+    const { data, error } = await supabase
+      .from("audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Simple anomaly detection logic
+    const clientStats: Record<string, { count: number; totalRisk: number }> = {};
+    const categoryStats: Record<string, number> = {};
+    
+    data.forEach(log => {
+      // Client frequency
+      if (!clientStats[log.client_name]) clientStats[log.client_name] = { count: 0, totalRisk: 0 };
+      clientStats[log.client_name].count++;
+      clientStats[log.client_name].totalRisk += log.risk_score;
+
+      // Category frequency
+      if (log.threat_category !== "None") {
+        categoryStats[log.threat_category] = (categoryStats[log.threat_category] || 0) + 1;
+      }
+    });
+
+    const anomalies = [];
+
+    // Flag 1: High frequency from one client
+    Object.entries(clientStats).forEach(([client, stats]) => {
+      if (stats.count > 10) {
+        anomalies.push({
+          type: "High Frequency",
+          severity: "Medium",
+          description: `Client "${client}" has ${stats.count} interactions in the last 50 logs.`,
+          impact: "Potential brute-force or automated probe."
+        });
+      }
+      const avgRisk = stats.totalRisk / stats.count;
+      if (avgRisk > 0.6) {
+        anomalies.push({
+          type: "High Average Risk",
+          severity: "High",
+          description: `Client "${client}" maintains an average risk score of ${(avgRisk * 100).toFixed(0)}%.`,
+          impact: "Persistent malicious behavior detected."
+        });
+      }
+    });
+
+    // Flag 2: Repeated specific threats
+    Object.entries(categoryStats).forEach(([category, count]) => {
+      if (count > 5) {
+        anomalies.push({
+          type: "Patterned Attack",
+          severity: "High",
+          description: `Repeated "${category}" attempts detected (${count} occurrences).`,
+          impact: "Targeted exploit attempt identified."
+        });
+      }
+    });
+
+    res.json({
+      anomalies,
+      summary: {
+        total_analyzed: data.length,
+        unique_clients: Object.keys(clientStats).length,
+        threat_distribution: categoryStats
+      }
+    });
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

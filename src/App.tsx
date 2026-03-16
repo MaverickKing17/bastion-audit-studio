@@ -56,6 +56,22 @@ interface Stats {
   aida_percent: number;
 }
 
+interface Anomaly {
+  type: string;
+  severity: 'High' | 'Medium' | 'Low';
+  description: string;
+  impact: string;
+}
+
+interface BehaviorData {
+  anomalies: Anomaly[];
+  summary: {
+    total_analyzed: number;
+    unique_clients: number;
+    threat_distribution: Record<string, number>;
+  };
+}
+
 export default function App() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -65,19 +81,22 @@ export default function App() {
     pipeda_percent: 100,
     aida_percent: 100
   });
-  const [activeTab, setActiveTab] = useState<'feed' | 'compliance'>('feed');
+  const [behavior, setBehavior] = useState<BehaviorData | null>(null);
+  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior'>('feed');
   const [isKilled, setIsKilled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
-      const [logsRes, statsRes] = await Promise.all([
+      const [logsRes, statsRes, behaviorRes] = await Promise.all([
         fetch('/api/audit/logs'),
-        fetch('/api/audit/stats')
+        fetch('/api/audit/stats'),
+        fetch('/api/audit/behavior')
       ]);
       
       if (logsRes.ok) setLogs(await logsRes.json());
       if (statsRes.ok) setStats(await statsRes.json());
+      if (behaviorRes.ok) setBehavior(await behaviorRes.json());
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -244,6 +263,15 @@ export default function App() {
             >
               Compliance Center
             </button>
+            <button 
+              onClick={() => setActiveTab('behavior')}
+              className={cn(
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all",
+                activeTab === 'behavior' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Behavior Analysis
+            </button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -305,19 +333,31 @@ export default function App() {
                         </div>
                         <div className="text-right w-24">
                           <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Risk Score</p>
-                          <p className={cn(
-                            "text-sm font-bold",
-                            log.risk_score > 0.7 ? "text-rose-500" : log.risk_score > 0.3 ? "text-amber-500" : "text-emerald-500"
-                          )}>
-                            {(log.risk_score * 100).toFixed(0)}%
-                          </p>
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${log.risk_score * 100}%` }}
+                                className={cn(
+                                  "h-full rounded-full",
+                                  log.risk_score > 0.7 ? "bg-rose-500" : log.risk_score > 0.3 ? "bg-amber-500" : "bg-emerald-500"
+                                )}
+                              />
+                            </div>
+                            <span className={cn(
+                              "text-xs font-bold tabular-nums",
+                              log.risk_score > 0.7 ? "text-rose-500" : log.risk_score > 0.3 ? "text-amber-500" : "text-emerald-500"
+                            )}>
+                              {(log.risk_score * 100).toFixed(0)}%
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
                   ))
                 )}
               </motion.div>
-            ) : (
+            ) : activeTab === 'compliance' ? (
               <motion.div 
                 key="compliance"
                 initial={{ opacity: 0, y: 10 }}
@@ -362,6 +402,74 @@ export default function App() {
                         />
                       </LineChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="behavior"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Analyzed Events</p>
+                    <p className="text-2xl font-bold text-banking-blue">{behavior?.summary.total_analyzed || 0}</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Unique Clients</p>
+                    <p className="text-2xl font-bold text-banking-blue">{behavior?.summary.unique_clients || 0}</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Anomalies Detected</p>
+                    <p className={cn(
+                      "text-2xl font-bold",
+                      (behavior?.anomalies.length || 0) > 0 ? "text-rose-500" : "text-emerald-500"
+                    )}>
+                      {behavior?.anomalies.length || 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                  <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-banking-blue" />
+                    Behavioral Anomalies
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {behavior?.anomalies.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <CheckCircle2 className="w-12 h-12 text-emerald-100 mx-auto mb-4" />
+                        <p className="text-slate-400 font-medium">No behavioral anomalies detected in recent patterns.</p>
+                      </div>
+                    ) : (
+                      behavior?.anomalies.map((anomaly, idx) => (
+                        <div key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                          <div className={cn(
+                            "p-2 rounded-lg",
+                            anomaly.severity === 'High' ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-600"
+                          )}>
+                            <AlertTriangle className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-slate-800">{anomaly.type}</span>
+                              <span className={cn(
+                                "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider",
+                                anomaly.severity === 'High' ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                              )}>
+                                {anomaly.severity} Priority
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-600 mb-1">{anomaly.description}</p>
+                            <p className="text-xs text-slate-400 font-medium italic">Impact: {anomaly.impact}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </motion.div>
