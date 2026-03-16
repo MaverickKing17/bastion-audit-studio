@@ -14,7 +14,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Database,
-  FileText
+  FileText,
+  ShieldCheck,
+  Award,
+  Cpu,
+  Globe,
+  Mail,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -151,6 +157,38 @@ export default function App() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Bastion Audit</h1>
             <p className="text-xs text-white/60 font-medium uppercase tracking-widest">Enterprise Security Gateway</p>
+          </div>
+        </div>
+
+        {/* Trust Badges */}
+        <div className="hidden xl:flex items-center gap-6 px-8 border-x border-white/10">
+          <div className="flex items-center gap-2 group cursor-help">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-white/90 leading-none">OSFI</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-tighter">Compliant</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 group cursor-help">
+            <Lock className="w-4 h-4 text-sky-400" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-white/90 leading-none">PIPEDA</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-tighter">Certified</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 group cursor-help">
+            <Cpu className="w-4 h-4 text-amber-400" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-white/90 leading-none">AIDA</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-tighter">Ready</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 group cursor-help">
+            <Award className="w-4 h-4 text-purple-400" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-white/90 leading-none">SOC2</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-tighter">Type II</span>
+            </div>
           </div>
         </div>
 
@@ -479,13 +517,94 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 px-8 border-t border-slate-200 bg-white mt-auto">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <p className="text-xs text-slate-400 font-medium">© 2026 Bastion Audit Security. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a href="#" className="text-xs text-slate-400 hover:text-banking-blue font-bold transition-colors">Documentation</a>
-            <a href="#" className="text-xs text-slate-400 hover:text-banking-blue font-bold transition-colors">API Reference</a>
-            <a href="#" className="text-xs text-slate-400 hover:text-banking-blue font-bold transition-colors">Support</a>
+      <footer className="bg-slate-900 text-slate-300 py-16 px-8 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          {/* Company Info */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Shield className="w-6 h-6 text-white" />
+              <span className="text-xl font-bold text-white tracking-tight">Bastion Audit</span>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-400">
+              The premier AI Security Gateway for Canadian Financial Institutions. 
+              Protecting the future of banking through real-time threat detection 
+              and regulatory compliance automation.
+            </p>
+            <div className="flex gap-4">
+              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer">
+                <Globe className="w-4 h-4" />
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer">
+                <Mail className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Regulatory Compliance */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-bold text-white uppercase tracking-widest">Regulatory Frameworks</h4>
+            <ul className="space-y-4">
+              <li>
+                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                  <span>OSFI E-21 Guidelines</span>
+                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
+              <li>
+                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                  <span>PIPEDA Data Protection</span>
+                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
+              <li>
+                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                  <span>AIDA AI Governance</span>
+                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
+              <li>
+                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                  <span>Bill C-27 Compliance</span>
+                  <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-bold text-white uppercase tracking-widest">Security Resources</h4>
+            <ul className="space-y-4">
+              <li>
+                <a href="#" className="text-sm hover:text-white transition-colors">AI Threat Landscape 2026</a>
+              </li>
+              <li>
+                <a href="#" className="text-sm hover:text-white transition-colors">Banking Security Whitepaper</a>
+              </li>
+              <li>
+                <a href="#" className="text-sm hover:text-white transition-colors">Lakera Guard Integration</a>
+              </li>
+              <li>
+                <a href="#" className="text-sm hover:text-white transition-colors">Incident Response Protocol</a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact & Support */}
+          <div className="space-y-6">
+            <h4 className="text-xs font-bold text-white uppercase tracking-widest">Enterprise Support</h4>
+            <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+              <p className="text-xs text-slate-400 mb-4 font-medium">
+                Need immediate assistance with a security breach?
+              </p>
+              <button className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors">
+                Contact SOC Team
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-500 font-medium">
+              © 2026 Bastion Audit Security. All rights reserved. 
+              Headquartered in Toronto, ON.
+            </p>
           </div>
         </div>
       </footer>
