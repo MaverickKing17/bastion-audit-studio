@@ -386,13 +386,17 @@ export default function App() {
 }
 
 function ComplianceCard({ title, subtitle, percentage, color }: { title: string, subtitle: string, percentage: number, color: string }) {
+  const isAlert = percentage < 90;
   const data = [
     { name: 'Compliant', value: percentage },
     { name: 'Non-Compliant', value: 100 - percentage },
   ];
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col items-center text-center">
+    <div className={cn(
+      "bg-white rounded-2xl p-6 border shadow-sm flex flex-col items-center text-center transition-all duration-500",
+      isAlert ? "border-rose-300 bg-rose-50/20 ring-4 ring-rose-500/5" : "border-slate-200"
+    )}>
       <h3 className="font-bold text-slate-800 mb-1">{title}</h3>
       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-6">{subtitle}</p>
       
@@ -410,21 +414,37 @@ function ComplianceCard({ title, subtitle, percentage, color }: { title: string,
               startAngle={90}
               endAngle={450}
             >
-              <Cell fill={color} />
+              <Cell fill={isAlert ? "#e11d48" : color} />
               <Cell fill="#f1f5f9" />
             </Pie>
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-slate-800">{percentage.toFixed(0)}%</span>
+          <div className="flex items-center gap-1">
+            <span className={cn("text-2xl font-bold", isAlert ? "text-rose-600" : "text-slate-800")}>
+              {percentage.toFixed(0)}%
+            </span>
+            {isAlert && <AlertCircle className="w-4 h-4 text-rose-500 animate-pulse" />}
+          </div>
           <span className="text-[8px] font-bold text-slate-400 uppercase">Score</span>
         </div>
       </div>
       
-      <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-        <Lock className="w-3 h-3" />
-        SECURED
+      <div className={cn(
+        "flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-full transition-colors",
+        isAlert 
+          ? "text-rose-600 bg-rose-100 animate-bounce" 
+          : "text-emerald-600 bg-emerald-50"
+      )}>
+        {isAlert ? <AlertTriangle className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+        {isAlert ? "ACTION REQUIRED" : "SECURED"}
       </div>
+      
+      {isAlert && (
+        <p className="mt-3 text-[10px] text-rose-500 font-bold animate-pulse">
+          CRITICAL: COMPLIANCE THRESHOLD BREACHED
+        </p>
+      )}
     </div>
   );
 }
