@@ -167,12 +167,30 @@ export default function App() {
   ]);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('All Categories');
+  const [filterCompliance, setFilterCompliance] = useState('All Compliance');
+  const [filterClient, setFilterClient] = useState('All Clients');
+  const [filterStatus, setFilterStatus] = useState('All Statuses');
 
-  const filteredLogs = logs.filter(log => 
-    log.input_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.threat_category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch = 
+      log.input_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.threat_category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = filterCategory === 'All Categories' || log.threat_category === filterCategory;
+    const matchesCompliance = filterCompliance === 'All Compliance' || log.compliance_tag === filterCompliance;
+    const matchesClient = filterClient === 'All Clients' || log.client_name === filterClient;
+    const matchesStatus = filterStatus === 'All Statuses' || 
+      (filterStatus === 'Blocked' && log.is_blocked) || 
+      (filterStatus === 'Allowed' && !log.is_blocked);
+
+    return matchesSearch && matchesCategory && matchesCompliance && matchesClient && matchesStatus;
+  });
+
+  const uniqueCategories = ['All Categories', ...Array.from(new Set(logs.map(l => l.threat_category)))];
+  const uniqueCompliance = ['All Compliance', ...Array.from(new Set(logs.map(l => l.compliance_tag)))];
+  const uniqueClients = ['All Clients', ...Array.from(new Set(logs.map(l => l.client_name)))];
 
   const handleSandboxTest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -652,24 +670,93 @@ export default function App() {
             </button>
           </div>
 
-          <div className="flex gap-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Search logs..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all w-64"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search logs..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Category</span>
+                  <select 
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[140px]"
+                  >
+                    {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Compliance</span>
+                  <select 
+                    value={filterCompliance}
+                    onChange={(e) => setFilterCompliance(e.target.value)}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[140px]"
+                  >
+                    {uniqueCompliance.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Client</span>
+                  <select 
+                    value={filterClient}
+                    onChange={(e) => setFilterClient(e.target.value)}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[140px]"
+                  >
+                    {uniqueClients.map(client => <option key={client} value={client}>{client}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Status</span>
+                  <select 
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[120px]"
+                  >
+                    {['All Statuses', 'Blocked', 'Allowed'].map(status => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <div className="h-5" /> {/* Spacer for label alignment */}
+                  <button 
+                    onClick={() => {
+                      setSearchTerm('');
+                      setFilterCategory('All Categories');
+                      setFilterCompliance('All Compliance');
+                      setFilterClient('All Clients');
+                      setFilterStatus('All Statuses');
+                    }}
+                    className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
+                    title="Clear all filters"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <div className="h-5" /> {/* Spacer for label alignment */}
+                  <button 
+                    onClick={() => alert("Exporting security audit report in PDF format...")}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export
+                  </button>
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => alert("Exporting security audit report in PDF format...")}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
-            >
-              <Download className="w-4 h-4" />
-              Export Report
-            </button>
           </div>
 
           <AnimatePresence mode="wait">
