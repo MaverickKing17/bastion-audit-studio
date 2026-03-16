@@ -139,6 +139,14 @@ export default function App() {
     { id: 'webhook', name: 'Custom Webhook', status: 'connected', icon: <Webhook className="w-4 h-4" /> }
   ]);
 
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredLogs = logs.filter(log => 
+    log.input_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.threat_category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleSandboxTest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sandboxInput.trim()) return;
@@ -407,7 +415,10 @@ export default function App() {
           </div>
 
           {/* Notifications */}
-          <div className="relative p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer">
+          <div 
+            onClick={() => alert("System Notifications:\n\n1. New OSFI E-21 draft released.\n2. 3 Shadow AI instances detected.\n3. Weekly security report ready for review.")}
+            className="relative p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+          >
             <Bell className="w-5 h-5 text-white" />
             {notifications > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-banking-blue">
@@ -606,10 +617,15 @@ export default function App() {
               <input 
                 type="text" 
                 placeholder="Search logs..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all w-64"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+            <button 
+              onClick={() => alert("Exporting security audit report in PDF format...")}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+            >
               <Download className="w-4 h-4" />
               Export Report
             </button>
@@ -624,27 +640,33 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-4"
               >
-                {logs.length === 0 ? (
+                {filteredLogs.length === 0 ? (
                   <div className="bg-white rounded-2xl p-20 text-center border border-dashed border-slate-300 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="relative z-10">
                       <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
                         <Database className="w-10 h-10 text-slate-200 animate-pulse" />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-800 mb-2">Awaiting Security Events</h3>
+                      <h3 className="text-lg font-bold text-slate-800 mb-2">
+                        {searchTerm ? "No matching logs found" : "Awaiting Security Events"}
+                      </h3>
                       <p className="text-slate-400 font-medium max-w-xs mx-auto mb-8">
-                        The Bastion Gateway is active and monitoring all AI agent interactions. No threats detected in the current session.
+                        {searchTerm 
+                          ? `We couldn't find any logs matching "${searchTerm}". Try a different search term.`
+                          : "The Bastion Gateway is active and monitoring all AI agent interactions. No threats detected in the current session."}
                       </p>
-                      <button 
-                        onClick={simulateAttack}
-                        className="px-6 py-2.5 bg-banking-blue text-white rounded-xl font-bold text-sm hover:bg-banking-blue/90 transition-all shadow-lg shadow-banking-blue/20 active:scale-95"
-                      >
-                        Generate Demo Activity
-                      </button>
+                      {!searchTerm && (
+                        <button 
+                          onClick={simulateAttack}
+                          className="px-6 py-2.5 bg-banking-blue text-white rounded-xl font-bold text-sm hover:bg-banking-blue/90 transition-all shadow-lg shadow-banking-blue/20 active:scale-95"
+                        >
+                          Generate Demo Activity
+                        </button>
+                      )}
                     </div>
                   </div>
                 ) : (
-                  logs.map((log) => (
+                  filteredLogs.map((log) => (
                     <motion.div 
                       layout
                       key={log.id}
@@ -1024,7 +1046,10 @@ export default function App() {
                       </h3>
                       <p className="text-sm text-slate-500">Connect Bastion alerts to your enterprise security ecosystem.</p>
                     </div>
-                    <button className="px-4 py-2 bg-banking-blue text-white rounded-xl text-xs font-bold hover:bg-banking-blue/90 transition-all flex items-center gap-2">
+                    <button 
+                      onClick={() => alert("Opening Global SIEM Configuration Panel...")}
+                      className="px-4 py-2 bg-banking-blue text-white rounded-xl text-xs font-bold hover:bg-banking-blue/90 transition-all flex items-center gap-2"
+                    >
                       <Settings className="w-3.5 h-3.5" />
                       Global Config
                     </button>
@@ -1054,7 +1079,10 @@ export default function App() {
                               </div>
                             </div>
                           </div>
-                          <button className="text-xs font-bold text-banking-blue hover:underline">
+                          <button 
+                            onClick={() => alert(`Configuring ${integration.name} integration settings...`)}
+                            className="text-xs font-bold text-banking-blue hover:underline"
+                          >
                             Configure
                           </button>
                         </div>
@@ -1268,10 +1296,16 @@ export default function App() {
               and regulatory compliance automation.
             </p>
             <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer">
+              <div 
+                onClick={() => alert("Redirecting to Bastion Global Network status page...")}
+                className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer"
+              >
                 <Globe className="w-4 h-4" />
               </div>
-              <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer">
+              <div 
+                onClick={() => alert("Opening default mail client to contact Bastion Support...")}
+                className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer"
+              >
                 <Mail className="w-4 h-4" />
               </div>
             </div>
@@ -1334,7 +1368,10 @@ export default function App() {
               <p className="text-xs text-slate-400 mb-4 font-medium">
                 Need immediate assistance with a security breach?
               </p>
-              <button className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors">
+              <button 
+                onClick={() => alert("Emergency SOC Hotline: 1-800-BASTION\n\nConnecting you to a security specialist...")}
+                className="w-full py-2.5 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
+              >
                 Contact SOC Team
               </button>
             </div>
