@@ -25,9 +25,16 @@ import {
   ChevronDown,
   Download,
   Building2,
-  Search
+  Search,
+  MessageSquare,
+  X,
+  Info,
+  BookOpen,
+  Scale,
+  History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { GoogleGenAI } from "@google/genai";
 import { 
   LineChart, 
   Line, 
@@ -99,6 +106,10 @@ export default function App() {
   const [selectedClient, setSelectedClient] = useState('All Departments');
   const [notifications, setNotifications] = useState(3);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string}[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -154,6 +165,38 @@ export default function App() {
 
   const handleKillSwitch = () => {
     setIsKilled(!isKilled);
+  };
+
+  const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const input = e.currentTarget.elements.namedItem('chatInput') as HTMLInputElement;
+    const message = input.value.trim();
+    if (!message) return;
+
+    setChatMessages(prev => [...prev, { role: 'user', text: message }]);
+    input.value = '';
+    setIsTyping(true);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [...chatMessages, { role: 'user', text: message }].map(m => ({
+          role: m.role,
+          parts: [{ text: m.text }]
+        })),
+        config: {
+          systemInstruction: "You are the Bastion Security Assistant. You help Canadian financial institutions understand AI security, OSFI E-21, PIPEDA, and AIDA compliance. Be professional, concise, and expert-level.",
+        }
+      });
+
+      setChatMessages(prev => [...prev, { role: 'model', text: response.text || "I'm sorry, I couldn't process that request." }]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChatMessages(prev => [...prev, { role: 'model', text: "Connection error. Please try again." }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const simulateAttack = async () => {
@@ -664,28 +707,28 @@ export default function App() {
             <h4 className="text-xs font-bold text-white uppercase tracking-widest">Regulatory Frameworks</h4>
             <ul className="space-y-4">
               <li>
-                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                <button onClick={() => setActiveModal('osfi')} className="group flex items-center justify-between text-sm hover:text-white transition-colors w-full text-left">
                   <span>OSFI E-21 Guidelines</span>
                   <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                <button onClick={() => setActiveModal('pipeda')} className="group flex items-center justify-between text-sm hover:text-white transition-colors w-full text-left">
                   <span>PIPEDA Data Protection</span>
                   <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
+                <button onClick={() => setActiveModal('aida')} className="group flex items-center justify-between text-sm hover:text-white transition-colors w-full text-left">
                   <span>AIDA AI Governance</span>
                   <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="group flex items-center justify-between text-sm hover:text-white transition-colors">
-                  <span>Bill C-27 Compliance</span>
+                <button onClick={() => setActiveModal('soc2')} className="group flex items-center justify-between text-sm hover:text-white transition-colors w-full text-left">
+                  <span>SOC2 Type II Standards</span>
                   <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -695,16 +738,16 @@ export default function App() {
             <h4 className="text-xs font-bold text-white uppercase tracking-widest">Security Resources</h4>
             <ul className="space-y-4">
               <li>
-                <a href="#" className="text-sm hover:text-white transition-colors">AI Threat Landscape 2026</a>
+                <button onClick={() => setActiveModal('threat')} className="text-sm hover:text-white transition-colors w-full text-left">AI Threat Landscape 2026</button>
               </li>
               <li>
-                <a href="#" className="text-sm hover:text-white transition-colors">Banking Security Whitepaper</a>
+                <button onClick={() => setActiveModal('whitepaper')} className="text-sm hover:text-white transition-colors w-full text-left">Banking Security Whitepaper</button>
               </li>
               <li>
-                <a href="#" className="text-sm hover:text-white transition-colors">Lakera Guard Integration</a>
+                <button onClick={() => setActiveModal('lakera')} className="text-sm hover:text-white transition-colors w-full text-left">Lakera Guard Integration</button>
               </li>
               <li>
-                <a href="#" className="text-sm hover:text-white transition-colors">Incident Response Protocol</a>
+                <button onClick={() => setActiveModal('incident')} className="text-sm hover:text-white transition-colors w-full text-left">Incident Response Protocol</button>
               </li>
             </ul>
           </div>
@@ -727,6 +770,274 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* AI Chat Toggle */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <AnimatePresence>
+          {isChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="absolute bottom-20 right-0 w-96 h-[500px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+            >
+              <div className="bg-banking-blue p-4 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold">Bastion Assistant</h4>
+                    <p className="text-[10px] text-white/60">AI Security Expert</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsChatOpen(false)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+                {chatMessages.length === 0 && (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                    <p className="text-sm text-slate-400 font-medium px-8">
+                      Hello! I'm your Bastion Security Assistant. How can I help with your AI compliance today?
+                    </p>
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={cn(
+                    "flex flex-col max-w-[80%]",
+                    msg.role === 'user' ? "ml-auto items-end" : "items-start"
+                  )}>
+                    <div className={cn(
+                      "p-3 rounded-2xl text-sm",
+                      msg.role === 'user' ? "bg-banking-blue text-white rounded-tr-none" : "bg-white border border-slate-200 text-slate-700 rounded-tl-none"
+                    )}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex items-start gap-2">
+                    <div className="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-none flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" />
+                      <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce [animation-delay:0.4s]" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleChatSubmit} className="p-4 bg-white border-t border-slate-100">
+                <div className="relative">
+                  <input
+                    name="chatInput"
+                    type="text"
+                    placeholder="Ask about OSFI, PIPEDA, AIDA..."
+                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all"
+                  />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-banking-blue text-white rounded-lg hover:bg-banking-blue/90 transition-colors">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className={cn(
+            "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90",
+            isChatOpen ? "bg-white text-banking-blue border border-slate-200" : "bg-banking-blue text-white"
+          )}
+        >
+          {isChatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Detailed Content Modal */}
+      <AnimatePresence>
+        {activeModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveModal(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-3xl max-h-[80vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-banking-blue/5 rounded-xl text-banking-blue">
+                    {activeModal === 'osfi' && <Scale className="w-5 h-5" />}
+                    {activeModal === 'pipeda' && <Lock className="w-5 h-5" />}
+                    {activeModal === 'aida' && <Cpu className="w-5 h-5" />}
+                    {activeModal === 'soc2' && <ShieldCheck className="w-5 h-5" />}
+                    {activeModal === 'threat' && <AlertTriangle className="w-5 h-5" />}
+                    {activeModal === 'whitepaper' && <BookOpen className="w-5 h-5" />}
+                    {activeModal === 'lakera' && <Activity className="w-5 h-5" />}
+                    {activeModal === 'incident' && <History className="w-5 h-5" />}
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800">
+                    {activeModal === 'osfi' && "OSFI E-21 Guidelines"}
+                    {activeModal === 'pipeda' && "PIPEDA Data Protection"}
+                    {activeModal === 'aida' && "AIDA AI Governance"}
+                    {activeModal === 'soc2' && "SOC2 Type II Standards"}
+                    {activeModal === 'threat' && "AI Threat Landscape 2026"}
+                    {activeModal === 'whitepaper' && "Banking Security Whitepaper"}
+                    {activeModal === 'lakera' && "Lakera Guard Integration"}
+                    {activeModal === 'incident' && "Incident Response Protocol"}
+                  </h3>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-8">
+                <div className="prose prose-slate max-w-none">
+                  {activeModal === 'osfi' && (
+                    <div className="space-y-6">
+                      <p className="text-lg text-slate-600 leading-relaxed">
+                        The Office of the Superintendent of Financial Institutions (OSFI) Guideline E-21 outlines the expectations for Operational Risk Management in Canadian financial institutions.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                          <h4 className="font-bold text-banking-blue mb-2">Governance</h4>
+                          <p className="text-sm text-slate-500">Establishing clear accountability for AI-driven operational risks at the board level.</p>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                          <h4 className="font-bold text-banking-blue mb-2">Risk Identification</h4>
+                          <p className="text-sm text-slate-500">Continuous monitoring of AI agent behaviors to prevent systemic failures.</p>
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-slate-800">Bastion Integration</h4>
+                      <p className="text-sm text-slate-500">
+                        Our platform automates the reporting requirements of E-21 by providing real-time audit logs and risk scoring for every AI interaction, ensuring that your operational risk profile is always transparent.
+                      </p>
+                    </div>
+                  )}
+                  {activeModal === 'pipeda' && (
+                    <div className="space-y-6">
+                      <p className="text-lg text-slate-600 leading-relaxed">
+                        The Personal Information Protection and Electronic Documents Act (PIPEDA) is the federal privacy law for private-sector organizations in Canada.
+                      </p>
+                      <ul className="space-y-3">
+                        <li className="flex gap-3 text-sm text-slate-600">
+                          <div className="w-1.5 h-1.5 bg-banking-blue rounded-full mt-1.5 shrink-0" />
+                          <span><strong>Consent:</strong> Ensuring AI agents do not solicit or store PII without explicit user authorization.</span>
+                        </li>
+                        <li className="flex gap-3 text-sm text-slate-600">
+                          <div className="w-1.5 h-1.5 bg-banking-blue rounded-full mt-1.5 shrink-0" />
+                          <span><strong>Safeguards:</strong> Real-time blocking of sensitive data leakage (SINs, Credit Card numbers) in AI responses.</span>
+                        </li>
+                      </ul>
+                      <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+                        <h4 className="font-bold text-emerald-800 mb-2">Compliance Status: Active</h4>
+                        <p className="text-sm text-emerald-600">Bastion Audit currently filters 100% of outgoing AI traffic for PIPEDA-sensitive patterns.</p>
+                      </div>
+                    </div>
+                  )}
+                  {activeModal === 'aida' && (
+                    <div className="space-y-6">
+                      <p className="text-lg text-slate-600 leading-relaxed">
+                        The Artificial Intelligence and Data Act (AIDA), introduced as part of Bill C-27, represents Canada's first dedicated AI regulatory framework.
+                      </p>
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
+                            <Info className="w-5 h-5 text-slate-400" />
+                          </div>
+                          <div>
+                            <h5 className="font-bold text-slate-800">High-Impact Systems</h5>
+                            <p className="text-sm text-slate-500">AIDA focuses on systems that could cause significant harm or biased outcomes.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
+                            <Scale className="w-5 h-5 text-slate-400" />
+                          </div>
+                          <div>
+                            <h5 className="font-bold text-slate-800">Bias Mitigation</h5>
+                            <p className="text-sm text-slate-500">Bastion monitors AI outputs for discriminatory language or biased decision-making patterns.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {activeModal === 'soc2' && (
+                    <div className="space-y-6">
+                      <p className="text-lg text-slate-600 leading-relaxed">
+                        SOC2 Type II certification ensures that Bastion Audit maintains the highest standards of security, availability, and confidentiality over time.
+                      </p>
+                      <div className="p-6 bg-slate-900 rounded-2xl text-white">
+                        <h4 className="font-bold mb-4">Trust Services Criteria</h4>
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                            <span>Security</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                            <span>Confidentiality</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                            <span>Availability</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                            <span>Privacy</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {activeModal === 'threat' && (
+                    <div className="space-y-6">
+                      <h4 className="font-bold text-slate-800">Emerging AI Threats in 2026</h4>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                          <h5 className="font-bold text-rose-800 mb-1">Indirect Prompt Injection</h5>
+                          <p className="text-sm text-rose-600">Malicious instructions hidden in data retrieved by the AI from external sources.</p>
+                        </div>
+                        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                          <h5 className="font-bold text-amber-800 mb-1">Model Inversion</h5>
+                          <p className="text-sm text-amber-600">Attempts to reconstruct training data from model outputs.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Add other modal content as needed */}
+                  {!['osfi', 'pipeda', 'aida', 'soc2', 'threat'].includes(activeModal) && (
+                    <div className="py-20 text-center">
+                      <BookOpen className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                      <p className="text-slate-400">Detailed documentation for this section is currently being finalized by our compliance team.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="px-6 py-2 bg-banking-blue text-white rounded-xl font-bold text-sm hover:bg-banking-blue/90 transition-all"
+                >
+                  Close Document
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
