@@ -32,7 +32,12 @@ import {
   Info,
   BookOpen,
   Scale,
-  History
+  History,
+  BarChart3,
+  Webhook,
+  Zap,
+  Settings,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
@@ -101,7 +106,7 @@ export default function App() {
     aida_percent: 100
   });
   const [behavior, setBehavior] = useState<BehaviorData | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior' | 'sandbox'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior' | 'sandbox' | 'fairness' | 'integrations'>('feed');
   const [isKilled, setIsKilled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState('All Departments');
@@ -114,6 +119,25 @@ export default function App() {
   const [sandboxInput, setSandboxInput] = useState('');
   const [sandboxResult, setSandboxResult] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isClientSelectorOpen, setIsClientSelectorOpen] = useState(false);
+  const [isScanningShadowAI, setIsScanningShadowAI] = useState(false);
+  const [shadowAIResults, setShadowAIResults] = useState<any[] | null>(null);
+  const [biasMetrics, setBiasMetrics] = useState({
+    fairnessScore: 94.2,
+    flaggedOutputs: 3,
+    biasCategories: [
+      { name: 'Gender', value: 12, color: '#6366f1' },
+      { name: 'Age', value: 8, color: '#8b5cf6' },
+      { name: 'Location', value: 5, color: '#ec4899' },
+      { name: 'Socioeconomic', value: 15, color: '#f43f5e' }
+    ]
+  });
+  const [integrations, setIntegrations] = useState([
+    { id: 'slack', name: 'Slack Alerts', status: 'connected', icon: <Zap className="w-4 h-4" /> },
+    { id: 'sentinel', name: 'Microsoft Sentinel', status: 'disconnected', icon: <Shield className="w-4 h-4" /> },
+    { id: 'splunk', name: 'Splunk SIEM', status: 'connected', icon: <Activity className="w-4 h-4" /> },
+    { id: 'webhook', name: 'Custom Webhook', status: 'connected', icon: <Webhook className="w-4 h-4" /> }
+  ]);
 
   const handleSandboxTest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,6 +216,25 @@ export default function App() {
 
   const handleKillSwitch = () => {
     setIsKilled(!isKilled);
+    if (!isKilled) {
+      alert("EMERGENCY KILL-SWITCH ACTIVATED: All AI agent traffic has been severed. OSFI compliance protocols engaged.");
+    } else {
+      alert("SYSTEM RESTART: AI gateway re-initialized. Resuming monitoring.");
+    }
+  };
+
+  const runShadowAIScan = () => {
+    setIsScanningShadowAI(true);
+    setShadowAIResults(null);
+    setTimeout(() => {
+      setShadowAIResults([
+        { name: 'Personal ChatGPT', user: 'Marketing Dept', risk: 'High', reason: 'PII Exposure' },
+        { name: 'Claude.ai', user: 'Legal Team', risk: 'Medium', reason: 'Unvetted Data Processing' },
+        { name: 'Midjourney', user: 'Design Dept', risk: 'Low', reason: 'IP Leakage Risk' }
+      ]);
+      setIsScanningShadowAI(false);
+      alert("Shadow AI Scan Complete: 3 unauthorized AI services detected within the corporate network.");
+    }, 3000);
   };
 
   const handleChatSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -300,15 +343,47 @@ export default function App() {
 
         <div className="flex items-center gap-8">
           {/* Client Selector */}
-          <div className="hidden lg:flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group">
-            <Building2 className="w-4 h-4 text-white/60" />
-            <div className="flex flex-col">
-              <span className="text-[10px] text-white/40 font-bold uppercase tracking-tighter">Monitoring</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white">{selectedClient}</span>
-                <ChevronDown className="w-3 h-3 text-white/40 group-hover:text-white transition-colors" />
+          <div className="relative">
+            <div 
+              onClick={() => setIsClientSelectorOpen(!isClientSelectorOpen)}
+              className="hidden lg:flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group"
+            >
+              <Building2 className="w-4 h-4 text-white/60" />
+              <div className="flex flex-col">
+                <span className="text-[10px] text-white/40 font-bold uppercase tracking-tighter">Monitoring</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white">{selectedClient}</span>
+                  <ChevronDown className="w-3 h-3 text-white/40 group-hover:text-white transition-colors" />
+                </div>
               </div>
             </div>
+
+            <AnimatePresence>
+              {isClientSelectorOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+                >
+                  {['All Departments', 'Toronto Wealth Mgmt', 'Montreal Retail Ops', 'Vancouver Risk Unit', 'Corporate HQ'].map((client) => (
+                    <div 
+                      key={client}
+                      onClick={() => {
+                        setSelectedClient(client);
+                        setIsClientSelectorOpen(false);
+                      }}
+                      className={cn(
+                        "px-4 py-3 text-sm font-medium cursor-pointer transition-colors",
+                        selectedClient === client ? "bg-banking-blue text-white" : "text-slate-300 hover:bg-slate-700"
+                      )}
+                    >
+                      {client}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Notifications */}
@@ -395,15 +470,20 @@ export default function App() {
               </button>
 
               <button 
+                onClick={runShadowAIScan}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98]"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
-                    <ShieldCheck className="w-4 h-4" />
+                    <Search className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-semibold text-slate-700">Run Compliance Scan</span>
+                  <span className="text-sm font-semibold text-slate-700">Shadow AI Discovery</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                {isScanningShadowAI ? (
+                  <span className="w-4 h-4 border-2 border-banking-blue/30 border-t-banking-blue rounded-full animate-spin" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                )}
               </button>
             </div>
           </div>
@@ -479,6 +559,24 @@ export default function App() {
             >
               Red Team Sandbox
               <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] rounded-full uppercase tracking-wider font-bold">New</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('fairness')}
+              className={cn(
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                activeTab === 'fairness' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Fairness & Bias
+            </button>
+            <button 
+              onClick={() => setActiveTab('integrations')}
+              className={cn(
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                activeTab === 'integrations' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              SIEM Integrations
             </button>
           </div>
 
@@ -730,6 +828,258 @@ export default function App() {
                         </div>
                       ))
                     )}
+                  </div>
+                </div>
+              </motion.div>
+            ) : activeTab === 'fairness' ? (
+              <motion.div 
+                key="fairness"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                      <div className="flex justify-between items-center mb-8">
+                        <div>
+                          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <Scale className="w-5 h-5 text-banking-blue" />
+                            AIDA Fairness Monitoring
+                          </h3>
+                          <p className="text-sm text-slate-500">Real-time detection of discriminatory AI outputs as per Bill C-27.</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-3xl font-bold text-emerald-500">{biasMetrics.fairnessScore}%</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Fairness Score</div>
+                        </div>
+                      </div>
+
+                      <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={[
+                            { time: '09:00', score: 92 },
+                            { time: '10:00', score: 95 },
+                            { time: '11:00', score: 93 },
+                            { time: '12:00', score: 94 },
+                            { time: '13:00', score: 96 },
+                            { time: '14:00', score: 94 }
+                          ]}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis dataKey="time" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis domain={[80, 100]} stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                            <Tooltip 
+                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="score" 
+                              stroke="#6366f1" 
+                              strokeWidth={3} 
+                              dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-6">Recent Bias Flags</h3>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-4">
+                          <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
+                            <AlertTriangle className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-rose-900 text-sm">Potential Gender Bias</span>
+                              <span className="text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded font-bold">High Impact</span>
+                            </div>
+                            <p className="text-xs text-rose-800">Model output favored male-coded language in a credit approval scenario for Client ID #882.</p>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-4">
+                          <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                            <AlertTriangle className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-bold text-amber-900 text-sm">Socioeconomic Skew</span>
+                              <span className="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded font-bold">Medium Impact</span>
+                            </div>
+                            <p className="text-xs text-amber-800">Analysis suggests model is penalizing applicants from specific postal codes in the GTA.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">Bias Distribution</h3>
+                      <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={biasMetrics.biasCategories}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {biasMetrics.biasCategories.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="space-y-2 mt-4">
+                        {biasMetrics.biasCategories.map((cat) => (
+                          <div key={cat.name} className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                              <span className="text-xs text-slate-600 font-medium">{cat.name}</span>
+                            </div>
+                            <span className="text-xs font-bold text-slate-900">{cat.value}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-900 p-6 rounded-2xl text-white shadow-xl">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-white/10 rounded-lg">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                        </div>
+                        <h3 className="text-sm font-bold uppercase tracking-widest">AIDA Ready</h3>
+                      </div>
+                      <p className="text-xs leading-relaxed text-white/80 font-medium">
+                        Your system is currently meeting 100% of the "High-Impact System" requirements under the Artificial Intelligence and Data Act.
+                      </p>
+                    </div>
+
+                    {shadowAIResults && (
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-4">Shadow AI Scan Results</h3>
+                        <div className="space-y-3">
+                          {shadowAIResults.map((res, i) => (
+                            <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                              <div>
+                                <p className="text-sm font-bold text-slate-800">{res.name}</p>
+                                <p className="text-[10px] text-slate-500">{res.user} • {res.reason}</p>
+                              </div>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                                res.risk === 'High' ? "bg-rose-100 text-rose-600" : res.risk === 'Medium' ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"
+                              )}>
+                                {res.risk}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ) : activeTab === 'integrations' ? (
+              <motion.div 
+                key="integrations"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <Webhook className="w-5 h-5 text-banking-blue" />
+                        SIEM & Incident Response
+                      </h3>
+                      <p className="text-sm text-slate-500">Connect Bastion alerts to your enterprise security ecosystem.</p>
+                    </div>
+                    <button className="px-4 py-2 bg-banking-blue text-white rounded-xl text-xs font-bold hover:bg-banking-blue/90 transition-all flex items-center gap-2">
+                      <Settings className="w-3.5 h-3.5" />
+                      Global Config
+                    </button>
+                  </div>
+                  
+                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {integrations.map((integration) => (
+                      <div key={integration.id} className="p-6 border border-slate-100 rounded-2xl hover:border-banking-blue/30 transition-all group bg-slate-50/30">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white rounded-xl border border-slate-100 flex items-center justify-center shadow-sm group-hover:text-banking-blue transition-colors">
+                              {integration.icon}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-900">{integration.name}</h4>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <div className={cn(
+                                  "w-1.5 h-1.5 rounded-full",
+                                  integration.status === 'connected' ? "bg-emerald-500" : "bg-slate-300"
+                                )} />
+                                <span className={cn(
+                                  "text-[10px] font-bold uppercase tracking-widest",
+                                  integration.status === 'connected' ? "text-emerald-600" : "text-slate-400"
+                                )}>
+                                  {integration.status}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <button className="text-xs font-bold text-banking-blue hover:underline">
+                            Configure
+                          </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-medium">Alert Threshold</span>
+                            <span className="text-slate-900 font-bold">Risk &gt; 0.7</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-medium">Last Sync</span>
+                            <span className="text-slate-900 font-bold">2 mins ago</span>
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => alert(`Test alert sent to ${integration.name}`)}
+                          className="w-full mt-6 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                        >
+                          Send Test Alert
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 rounded-2xl p-8 text-white shadow-xl flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
+                      <Zap className="w-8 h-8 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold mb-1">Real-time Incident Response</h3>
+                      <p className="text-sm text-white/60 font-medium">Automate your security workflow with Bastion's high-performance event bus.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">142ms</div>
+                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Avg. Delivery</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">99.9%</div>
+                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Uptime</div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
