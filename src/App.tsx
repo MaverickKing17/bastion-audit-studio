@@ -37,7 +37,10 @@ import {
   Webhook,
   Zap,
   Settings,
-  Users
+  Users,
+  Plus,
+  Bot,
+  Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
@@ -240,7 +243,7 @@ function BastionApp() {
     aida_percent: 100
   });
   const [behavior, setBehavior] = useState<BehaviorData | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior' | 'sandbox' | 'fairness' | 'integrations' | 'audit'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'compliance' | 'behavior' | 'sandbox' | 'fairness' | 'integrations' | 'audit' | 'inventory'>('feed');
   const [isKilled, setIsKilled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isGeneratingAudit, setIsGeneratingAudit] = useState(false);
@@ -926,6 +929,39 @@ function BastionApp() {
             </div>
           </div>
 
+          <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 relative overflow-hidden mb-6">
+            <div className="absolute top-0 right-0 p-4 opacity-5">
+              <Globe className="w-24 h-24 text-white" />
+            </div>
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Data Residency</h3>
+              <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[8px] font-black uppercase border border-emerald-500/20">
+                Compliant
+              </div>
+            </div>
+            <div className="space-y-4 relative z-10">
+              <div className="flex justify-between items-center group">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                  <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">Primary Region</span>
+                </div>
+                <span className="text-[9px] font-black text-white uppercase tracking-wider">Canada Central</span>
+              </div>
+              <div className="flex justify-between items-center group">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                  <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">Failover Zone</span>
+                </div>
+                <span className="text-[9px] font-black text-white/60 uppercase tracking-wider">Canada East</span>
+              </div>
+              <div className="pt-4 border-t border-white/5">
+                <p className="text-[9px] text-white/30 font-medium leading-relaxed">
+                  All PII processing and immutable audit trails are strictly confined to Canadian sovereign infrastructure.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-5">
               <Activity className="w-24 h-24 text-white" />
@@ -1009,6 +1045,16 @@ function BastionApp() {
               )}
             >
               Live Threat Feed
+            </button>
+            <button 
+              onClick={() => setActiveTab('inventory')}
+              className={cn(
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                activeTab === 'inventory' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              <Database className="w-4 h-4" />
+              Model Inventory
             </button>
             <button 
               onClick={() => {
@@ -1275,6 +1321,143 @@ function BastionApp() {
                     </motion.div>
                   ))
                 )}
+              </motion.div>
+            ) : activeTab === 'inventory' ? (
+              <motion.div 
+                key="inventory"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                        <Database className="w-6 h-6 text-banking-blue" />
+                        Enterprise Model Inventory
+                      </h3>
+                      <p className="text-sm text-slate-500 mt-1">OSFI E-21 compliant registry of all deployed AI agents and models.</p>
+                    </div>
+                    <button 
+                      onClick={() => alert("Registering new AI agent in secure inventory...")}
+                      className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95 flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Register Agent
+                    </button>
+                  </div>
+
+                  <div className="p-8">
+                    <div className="grid grid-cols-1 gap-4">
+                      {[
+                        { name: "Retail Banking Assistant", provider: "Azure OpenAI (Canada Central)", risk: "Low", status: "Active", lastAudit: "2026-03-10", version: "v2.4.1" },
+                        { name: "Claims Processing Engine", provider: "Anthropic (AWS Canada)", risk: "Medium", status: "Active", lastAudit: "2026-03-15", version: "v1.9.0" },
+                        { name: "Underwriting Risk Model", provider: "Internal (On-Premise)", risk: "High", status: "Review Required", lastAudit: "2026-02-28", version: "v4.0.2" },
+                        { name: "Fraud Detection Agent", provider: "Google Vertex AI", risk: "Low", status: "Active", lastAudit: "2026-03-12", version: "v3.1.0" }
+                      ].map((agent, i) => (
+                        <div key={i} className="group flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:border-banking-blue/30 hover:shadow-xl hover:shadow-slate-200/50 transition-all">
+                          <div className="flex items-center gap-6">
+                            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 group-hover:bg-banking-blue/5 transition-colors">
+                              <Bot className="w-7 h-7 text-slate-400 group-hover:text-banking-blue transition-colors" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-3 mb-1">
+                                <h4 className="text-base font-bold text-slate-900">{agent.name}</h4>
+                                <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase tracking-widest border border-slate-200">
+                                  {agent.version}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                                  <Globe className="w-3.5 h-3.5" />
+                                  {agent.provider}
+                                </p>
+                                <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  Last Audit: {agent.lastAudit}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-10">
+                            <div className="text-right">
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-1.5">Risk Tier</p>
+                              <span className={cn(
+                                "text-[10px] px-3 py-1 rounded-md font-black uppercase tracking-widest border",
+                                agent.risk === 'High' ? "bg-rose-50 text-rose-600 border-rose-100" : agent.risk === 'Medium' ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                              )}>
+                                {agent.risk} Risk
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-1.5">Status</p>
+                              <span className={cn(
+                                "text-[10px] font-bold",
+                                agent.status === 'Active' ? "text-emerald-600" : "text-amber-600"
+                              )}>
+                                {agent.status}
+                              </span>
+                            </div>
+                            <button className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-banking-blue hover:text-white transition-all border border-slate-100">
+                              <ChevronRight className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
+                    <div className="relative z-10">
+                      <h3 className="text-lg font-bold mb-2">Model Risk Assessment</h3>
+                      <p className="text-slate-400 text-sm mb-6">Automated OSFI E-21 scoring for your entire AI portfolio.</p>
+                      <div className="space-y-4">
+                        {[
+                          { label: "Operational Resilience", score: 94 },
+                          { label: "Data Governance", score: 88 },
+                          { label: "Third-Party Risk", score: 91 }
+                        ].map((metric, i) => (
+                          <div key={i} className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold">
+                              <span className="text-slate-400 uppercase tracking-widest">{metric.label}</span>
+                              <span>{metric.score}%</span>
+                            </div>
+                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div className="h-full bg-banking-blue rounded-full" style={{ width: `${metric.score}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-banking-blue/20 rounded-full blur-3xl" />
+                  </div>
+
+                  <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 mb-6">Inventory Statistics</h3>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Agents</p>
+                        <p className="text-2xl font-black text-slate-900">12</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">High Risk</p>
+                        <p className="text-2xl font-black text-rose-500">1</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pending Audit</p>
+                        <p className="text-2xl font-black text-amber-500">2</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Compliant</p>
+                        <p className="text-2xl font-black text-emerald-500">9</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             ) : activeTab === 'compliance' ? (
               <motion.div 
