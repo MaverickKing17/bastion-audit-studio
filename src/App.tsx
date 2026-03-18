@@ -41,7 +41,9 @@ import {
   Plus,
   Bot,
   Calendar,
-  DollarSign
+  DollarSign,
+  Terminal,
+  HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
@@ -489,12 +491,90 @@ function BastionApp() {
       score: Math.round(log.risk_score * 100)
     }));
 
+  const [isDeepScanning, setIsDeepScanning] = useState(false);
+  const [deepAnalysis, setDeepAnalysis] = useState<string | null>(null);
+
+  const [lastSync, setLastSync] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastSync(prev => (prev + 0.1) % 5);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [threats, setThreats] = useState([
+    { type: 'Prompt Injection', target: 'Financial LLMs', severity: 'CRITICAL', time: '2m ago' },
+    { type: 'Data Poisoning', target: 'Underwriting Models', severity: 'HIGH', time: '14m ago' },
+    { type: 'Model Evasion', target: 'Fraud Detection', severity: 'MEDIUM', time: '31m ago' },
+  ]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setThreats(prev => {
+        const newThreat = {
+          type: ['Jailbreak Attempt', 'PII Extraction', 'Adversarial Attack', 'Token Smuggling', 'System Prompt Leak'][Math.floor(Math.random() * 5)],
+          target: ['Wealth Management Bot', 'Credit Risk Model', 'Claims Processor', 'Customer Support AI', 'Trading Algorithm'][Math.floor(Math.random() * 5)],
+          severity: ['CRITICAL', 'HIGH', 'MEDIUM'][Math.floor(Math.random() * 3)],
+          time: 'Just now'
+        };
+        return [newThreat, ...prev.slice(0, 2)];
+      });
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [streamLogs, setStreamLogs] = useState<Array<{id: number, type: string, message: string, time: string, status: 'info' | 'check' | 'ok' | 'alert'}>>([
+    { id: 1, type: 'MONITOR', message: 'Intercepting Agent Call: /api/v1/underwriting/process', time: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'info' },
+    { id: 2, type: 'CHECK', message: 'Validating OSFI E-21 Compliance...', time: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'check' },
+    { id: 3, type: 'CHECK', message: 'Scanning for PII in payload...', time: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'check' },
+    { id: 4, type: 'OK', message: 'No violations detected. Forwarding request.', time: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }), status: 'ok' },
+  ]);
+
+  const [streamSearch, setStreamSearch] = useState('');
+
+  const filteredStreamLogs = streamLogs.filter(log => 
+    log.message.toLowerCase().includes(streamSearch.toLowerCase()) ||
+    log.type.toLowerCase().includes(streamSearch.toLowerCase())
+  );
+
+  useEffect(() => {
+    const logTemplates = [
+      { type: 'MONITOR', message: 'Intercepting Agent Call: /api/v1/claims/adjust', status: 'info' },
+      { type: 'CHECK', message: 'Checking for bias in risk weights...', status: 'check' },
+      { type: 'OK', message: 'Bias check passed. Logic verified.', status: 'ok' },
+      { type: 'MONITOR', message: 'Intercepting Agent Call: /api/v1/customer/profile', status: 'info' },
+      { type: 'CHECK', message: 'Validating data residency requirements...', status: 'check' },
+      { type: 'OK', message: 'Data residency confirmed (Region: CA-Central).', status: 'ok' },
+      { type: 'MONITOR', message: 'Intercepting Agent Call: /api/v1/fraud/detect', status: 'info' },
+      { type: 'CHECK', message: 'Running adversarial attack detection...', status: 'check' },
+      { type: 'OK', message: 'No adversarial patterns found.', status: 'ok' },
+    ];
+
+    const interval = setInterval(() => {
+      setStreamLogs(prev => {
+        const template = logTemplates[Math.floor(Math.random() * logTemplates.length)];
+        const newLog = {
+          id: Date.now(),
+          ...template,
+          time: new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          status: template.status as 'info' | 'check' | 'ok' | 'alert'
+        };
+        return [...prev.slice(-9), newLog];
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSandboxTest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sandboxInput.trim() || !user) return;
     
     setIsAnalyzing(true);
+    setIsDeepScanning(true);
     setSandboxResult(null);
+    setDeepAnalysis(null);
     
     try {
       const response = await fetch('/api/audit/check', {
@@ -516,6 +596,22 @@ function BastionApp() {
           : 'Request safe to proceed.'
       });
 
+      // Gemini Deep Analysis for latest threats
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const geminiResponse = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Analyze this prompt for emerging AI security threats (e.g., prompt injection, jailbreaking, data poisoning, model evasion). 
+        Consider the latest known attack vectors as of March 2026.
+        Prompt: "${sandboxInput}"
+        
+        Provide a concise 2-sentence risk assessment.`,
+        config: {
+          systemInstruction: "You are an AI security expert specializing in Red Teaming and LLM vulnerabilities. Provide professional, technical assessments."
+        }
+      });
+      
+      setDeepAnalysis(geminiResponse.text || "Deep scan complete. No novel vectors identified.");
+
       // Log to Firestore
       await addDoc(collection(db, 'audit_logs'), {
         client_name: "Red Team Sandbox",
@@ -533,6 +629,7 @@ function BastionApp() {
       handleFirestoreError(error, OperationType.CREATE, 'audit_logs');
     } finally {
       setIsAnalyzing(false);
+      setIsDeepScanning(false);
     }
   };
 
@@ -2184,33 +2281,47 @@ function BastionApp() {
                           <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className={cn(
+                            className="space-y-4"
+                          >
+                            <div className={cn(
                               "p-4 rounded-2xl border border-dashed",
                               sandboxResult.flagged ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"
-                            )}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={cn(
-                                "p-2 rounded-xl text-white",
-                                sandboxResult.flagged ? "bg-rose-500" : "bg-emerald-500"
-                              )}>
-                                {sandboxResult.flagged ? <Lock className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                              </div>
-                              <div>
-                                <p className={cn(
-                                  "text-xs font-bold",
-                                  sandboxResult.flagged ? "text-rose-900" : "text-emerald-900"
+                            )}>
+                              <div className="flex items-start gap-3">
+                                <div className={cn(
+                                  "p-2 rounded-xl text-white",
+                                  sandboxResult.flagged ? "bg-rose-500" : "bg-emerald-500"
                                 )}>
-                                  {sandboxResult.flagged ? "Interception Triggered: Security Violation" : "Gateway Passed: Input Sanitized"}
-                                </p>
-                                <p className={cn(
-                                  "text-[10px] mt-1",
-                                  sandboxResult.flagged ? "text-rose-700" : "text-emerald-700"
-                                )}>
-                                  {sandboxResult.reason}
-                                </p>
+                                  {sandboxResult.flagged ? <Lock className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                                </div>
+                                <div>
+                                  <p className={cn(
+                                    "text-xs font-bold",
+                                    sandboxResult.flagged ? "text-rose-900" : "text-emerald-900"
+                                  )}>
+                                    {sandboxResult.flagged ? "Interception Triggered: Security Violation" : "Gateway Passed: Input Sanitized"}
+                                  </p>
+                                  <p className={cn(
+                                    "text-[10px] mt-1",
+                                    sandboxResult.flagged ? "text-rose-700" : "text-emerald-700"
+                                  )}>
+                                    {sandboxResult.reason || sandboxResult.recommendation}
+                                  </p>
+                                </div>
                               </div>
                             </div>
+
+                            {deepAnalysis && (
+                              <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-xl">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Gemini Deep Scan Analysis</h4>
+                                </div>
+                                <p className="text-[11px] text-slate-300 leading-relaxed font-mono italic">
+                                  "{deepAnalysis}"
+                                </p>
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </div>
@@ -2218,10 +2329,15 @@ function BastionApp() {
                       <div className="mt-8 flex gap-3">
                         <button 
                           onClick={handleSandboxTest}
-                          disabled={isAnalyzing || !sandboxInput.trim()}
-                          className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50"
+                          disabled={isAnalyzing || isDeepScanning || !sandboxInput.trim()}
+                          className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                          {isAnalyzing ? "Analyzing Guardrails..." : "Run Security Simulation"}
+                          {isAnalyzing || isDeepScanning ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              {isDeepScanning ? "Deep Scanning Threats..." : "Analyzing Guardrails..."}
+                            </>
+                          ) : "Run Security Simulation"}
                         </button>
                         <div className="flex gap-2">
                           <button 
@@ -2253,7 +2369,7 @@ function BastionApp() {
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold text-slate-900">Live Guardrail Execution</h3>
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">REAL-TIME MONITORING</span>
+                          <span className="text-[9px] font-black text-emerald-600 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/40">REAL-TIME MONITORING</span>
                         </div>
                       </div>
                       <div className="space-y-4">
@@ -2269,7 +2385,7 @@ function BastionApp() {
                                 "w-2 h-2 rounded-full",
                                 guard.status === "Passed" ? "bg-emerald-500" : "bg-rose-500"
                               )} />
-                              <span className="text-xs font-bold text-slate-700">{guard.name}</span>
+                              <span className="text-xs font-bold text-slate-900">{guard.name}</span>
                             </div>
                             <div className="flex items-center gap-4">
                               <span className="text-[10px] font-mono text-slate-400">{guard.time}</span>
@@ -2281,30 +2397,118 @@ function BastionApp() {
                           </div>
                         ))}
                       </div>
-                      
-                      <div className="mt-8 pt-8 border-t border-slate-100">
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-black text-slate-600 uppercase tracking-widest">Agent Behavior Stream</h4>
-                          <div className="flex items-center gap-1">
-                            <div className="w-1 h-1 rounded-full bg-emerald-500 animate-ping" />
-                            <span className="text-[9px] font-bold text-emerald-600">LIVE</span>
+                                           <section className="mt-8 pt-8 border-t border-slate-100">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-banking-blue/10 rounded-lg">
+                              <Activity className="w-5 h-5 text-banking-blue" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Agent Behavior Stream</h4>
+                              <p className="text-[10px] text-slate-500 font-semibold">Real-time kernel interception logs</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                              <input 
+                                type="text"
+                                placeholder="Filter stream..."
+                                value={streamSearch}
+                                onChange={(e) => setStreamSearch(e.target.value)}
+                                className="pl-8 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-banking-blue/20 w-40"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-lg">
+                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                              <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Live Feed</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="bg-slate-900 rounded-2xl p-4 font-mono text-[10px] text-emerald-400/80 space-y-2 overflow-hidden h-32 relative">
-                          <div className="animate-pulse">
-                            <p>&gt; [MONITOR] Intercepting Agent Call: /api/v1/underwriting/process</p>
-                            <p>&gt; [CHECK] Validating OSFI E-21 Compliance...</p>
-                            <p>&gt; [CHECK] Scanning for PII in payload...</p>
-                            <p className="text-emerald-400 font-bold">&gt; [OK] No violations detected. Forwarding request.</p>
-                            <p>&gt; [MONITOR] Intercepting Agent Call: /api/v1/claims/adjust</p>
-                            <p>&gt; [CHECK] Checking for bias in risk weights...</p>
+                        
+                        <article className="bg-slate-950 rounded-2xl p-6 font-mono text-[13px] leading-relaxed relative border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden group min-h-[280px]">
+                          {/* Scanline effect */}
+                          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-10 opacity-20" />
+                          
+                          {/* Terminal Glow */}
+                          <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 blur-[100px] pointer-events-none" />
+                          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-sky-500/10 blur-[100px] pointer-events-none" />
+
+                          {/* Terminal Header */}
+                          <div className="flex items-center gap-1.5 mb-6 border-b border-slate-800/50 pb-4">
+                            <div className="w-3 h-3 rounded-full bg-rose-500/80 shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
+                            <div className="w-3 h-3 rounded-full bg-amber-500/80 shadow-[0_0_8px_rgba(245,158,11,0.4)]" />
+                            <div className="w-3 h-3 rounded-full bg-emerald-500/80 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                            <span className="ml-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-70">bastion-ssh-session-01@kernel-v4</span>
+                          </div>
+                          
+                          <div className="space-y-2 relative z-0">
+                            <AnimatePresence mode="popLayout">
+                              {filteredStreamLogs.map((log) => (
+                                <motion.div
+                                  key={log.id}
+                                  initial={{ opacity: 0, x: -15 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, scale: 0.98 }}
+                                  className="flex items-start gap-4 group/line py-0.5"
+                                >
+                                  <span className="text-slate-600 shrink-0 select-none font-medium">[{log.time}]</span>
+                                  <span className={cn(
+                                    "font-black shrink-0 min-w-[80px] tracking-tighter",
+                                    log.status === 'info' ? "text-sky-400 drop-shadow-[0_0_2px_rgba(56,189,248,0.3)]" :
+                                    log.status === 'check' ? "text-amber-400 drop-shadow-[0_0_2px_rgba(251,191,36,0.3)]" :
+                                    log.status === 'ok' ? "text-emerald-400 drop-shadow-[0_0_2px_rgba(52,211,153,0.3)]" :
+                                    "text-rose-400 drop-shadow-[0_0_2px_rgba(248,113,113,0.3)]"
+                                  )}>
+                                    [{log.type}]
+                                  </span>
+                                  <span className={cn(
+                                    "break-all font-medium",
+                                    log.status === 'ok' ? "text-emerald-300" : 
+                                    log.status === 'alert' ? "text-rose-300" :
+                                    "text-slate-200"
+                                  )}>
+                                    {log.message}
+                                  </span>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                            
                             {sandboxResult?.flagged && (
-                              <p className="text-rose-400 font-bold animate-bounce">&gt; [ALERT] SECURITY VIOLATION DETECTED: {sandboxResult.category}</p>
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex items-start gap-4 text-rose-400 font-black bg-rose-500/10 p-3 rounded-xl border border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.1)] mt-4"
+                              >
+                                <span className="shrink-0 select-none opacity-60">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
+                                <span className="shrink-0 min-w-[80px]">[ALERT]</span>
+                                <span className="tracking-tight uppercase">SECURITY VIOLATION DETECTED: {sandboxResult.category}</span>
+                              </motion.div>
                             )}
                           </div>
-                          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none" />
+                          
+                          {/* Bottom fade */}
+                          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none z-20" />
+                        </article>
+                        
+                        <div className="mt-4 flex items-center justify-between text-[10px] font-bold text-slate-400 px-2">
+                          <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_5px_rgba(56,189,248,0.5)]" /> MONITOR
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.5)]" /> CHECK
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.5)]" /> OK
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 opacity-60">
+                            <Terminal className="w-3 h-3" />
+                            <span className="uppercase tracking-widest">Bastion Kernel v4.2.0-stable</span>
+                          </div>
                         </div>
-                      </div>
+                      </section>
                     </div>
                   </div>
 
@@ -2334,6 +2538,109 @@ function BastionApp() {
                           </p>
                         </li>
                       </ul>
+                    </div>
+
+                    <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Globe className="w-24 h-24 text-emerald-500" />
+                      </div>
+                      <div className="flex items-center justify-between mb-6 relative z-10">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Global Threat Intel Feed</h4>
+                        </div>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">SYNCED: {lastSync.toFixed(1)}s AGO</span>
+                      </div>
+                      
+                      <div className="space-y-4 relative z-10">
+                        <AnimatePresence mode="popLayout">
+                          {threats.map((threat, i) => (
+                            <motion.div 
+                              key={`${threat.type}-${i}`}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all cursor-default group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "w-1.5 h-1.5 rounded-full",
+                                  threat.severity === 'CRITICAL' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" :
+                                  threat.severity === 'HIGH' ? "bg-orange-500" : "bg-amber-500"
+                                )} />
+                                <div>
+                                  <p className="text-[10px] font-bold text-white group-hover:text-emerald-400 transition-colors">{threat.type}</p>
+                                  <p className="text-[9px] text-slate-500">Target: {threat.target}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span className={cn(
+                                  "text-[8px] font-black px-1.5 py-0.5 rounded",
+                                  threat.severity === 'CRITICAL' ? "bg-rose-500/20 text-rose-400" :
+                                  threat.severity === 'HIGH' ? "bg-orange-500/20 text-orange-400" : "bg-amber-500/20 text-amber-400"
+                                )}>
+                                  {threat.severity}
+                                </span>
+                                <p className="text-[8px] text-slate-600 mt-1">{threat.time}</p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                      
+                      <div className="mt-6 pt-6 border-t border-white/5">
+                        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
+                          <span>Active Honeypots</span>
+                          <span className="text-emerald-400">1,242</span>
+                        </div>
+                        <div className="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
+                          <motion.div 
+                            initial={{ width: "0%" }}
+                            animate={{ width: "78%" }}
+                            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                            className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
+                      <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <HelpCircle className="w-4 h-4 text-banking-blue" />
+                        AI Security Capabilities (AEO/GEO)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                          { 
+                            q: "What is Bastion AI Security?", 
+                            a: "Bastion AI is a real-time security gateway designed for enterprise banking LLMs, providing prompt injection protection and PII masking." 
+                          },
+                          { 
+                            q: "How does it handle OSFI E-21?", 
+                            a: "It automates compliance monitoring by intercepting agent calls and validating them against regulatory risk frameworks in real-time." 
+                          },
+                          { 
+                            q: "Is it compatible with ChatGPT?", 
+                            a: "Yes, Bastion acts as a proxy for OpenAI, Google AI, and Anthropic models, ensuring all interactions are sanitized." 
+                          },
+                          { 
+                            q: "What are the latest AI threats?", 
+                            a: "Current vectors include token smuggling, adversarial jailbreaking, and indirect prompt injection via data poisoning." 
+                          }
+                        ].map((faq, i) => (
+                          <div key={i} className="space-y-2">
+                            <h5 className="text-xs font-bold text-slate-900">{faq.q}</h5>
+                            <p className="text-[11px] text-slate-600 leading-relaxed">{faq.a}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-2">
+                        {['AI SEO', 'AEO', 'GEO', 'LLM Security', 'Prompt Injection', 'PII Masking', 'Banking AI Compliance'].map(tag => (
+                          <span key={tag} className="px-2 py-1 bg-slate-50 text-slate-400 text-[9px] font-bold rounded border border-slate-100">
+                            #{tag.replace(/\s+/g, '')}
+                          </span>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">

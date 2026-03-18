@@ -2,7 +2,8 @@
 
 @theme {
   --color-banking-blue: #002B45;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Segoe UI", "Tahoma", "Verdana", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "Consolas", "Courier New", ui-monospace, SFMono-Regular, monospace;
 }
 
 @layer base {
