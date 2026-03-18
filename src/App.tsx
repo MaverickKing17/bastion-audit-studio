@@ -867,21 +867,21 @@ function BastionApp() {
         <div className="col-span-12 lg:col-span-3 space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Tenant Context</h3>
-              <Users className="w-3.5 h-3.5 text-slate-400" />
+              <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-[0.2em]">Tenant Context</h3>
+              <Users className="w-3.5 h-3.5 text-slate-600" />
             </div>
             <div className="p-4">
               <select 
                 value={selectedTenant}
                 onChange={(e) => setSelectedTenant(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all cursor-pointer appearance-none"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all cursor-pointer appearance-none"
               >
                 <option>Global Enterprise</option>
                 <option>Retail Banking Div.</option>
                 <option>Wealth Management</option>
                 <option>Insurance (Canada)</option>
               </select>
-              <p className="mt-2 text-[9px] text-slate-400 font-medium px-1">
+              <p className="mt-2 text-[9px] text-slate-800 font-bold px-1">
                 Currently monitoring 14 active AI agents for this tenant.
               </p>
             </div>
@@ -889,10 +889,10 @@ function BastionApp() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Management Actions</h3>
+              <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-[0.2em]">Management Actions</h3>
               <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
               </div>
             </div>
             <div className="p-4 space-y-3">
@@ -946,8 +946,8 @@ function BastionApp() {
                 </>
               ) : (
                 <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
-                  <Lock className="w-5 h-5 text-slate-300 mx-auto mb-2" />
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Privileges Required</p>
+                  <Lock className="w-5 h-5 text-slate-500 mx-auto mb-2" />
+                  <p className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">Admin Privileges Required</p>
                 </div>
               )}
             </div>
@@ -958,7 +958,7 @@ function BastionApp() {
               <Globe className="w-24 h-24 text-white" />
             </div>
             <div className="flex items-center justify-between mb-6 relative z-10">
-              <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Data Residency</h3>
+              <h3 className="text-[10px] font-bold text-white/80 uppercase tracking-[0.2em]">Data Residency</h3>
               <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[8px] font-black uppercase border border-emerald-500/20">
                 Compliant
               </div>
@@ -979,7 +979,7 @@ function BastionApp() {
                 <span className="text-[9px] font-black text-white/60 uppercase tracking-wider">Canada East</span>
               </div>
               <div className="pt-4 border-t border-white/5">
-                <p className="text-[9px] text-white/30 font-medium leading-relaxed">
+                <p className="text-[9px] text-white/70 font-bold leading-relaxed">
                   All PII processing and immutable audit trails are strictly confined to Canadian sovereign infrastructure.
                 </p>
               </div>
@@ -990,7 +990,7 @@ function BastionApp() {
             <div className="absolute top-0 right-0 p-4 opacity-5">
               <Activity className="w-24 h-24 text-white" />
             </div>
-            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-6 relative z-10">System Status</h3>
+            <h3 className="text-[10px] font-bold text-white/80 uppercase tracking-[0.2em] mb-6 relative z-10">System Status</h3>
             <div className="space-y-5 relative z-10">
               <div className="flex justify-between items-center group cursor-help">
                 <div className="flex items-center gap-2">
@@ -1027,8 +1027,8 @@ function BastionApp() {
             
             <div className="mt-8 pt-6 border-t border-white/5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Traffic Load</span>
-                <span className="text-[9px] font-bold text-white/60">Nominal</span>
+                <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">Traffic Load</span>
+                <span className="text-[9px] font-bold text-white">Nominal</span>
               </div>
               <div className="flex gap-1 h-1">
                 {[...Array(12)].map((_, i) => (
@@ -1045,15 +1045,15 @@ function BastionApp() {
         {/* Dashboard Sections */}
         <div className="col-span-12 lg:col-span-9 space-y-6">
           {!user && (
-            <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl flex items-center gap-4 mb-6">
-              <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
+            <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl flex items-center gap-4 mb-6 shadow-sm">
+              <AlertCircle className="w-6 h-6 text-amber-700 shrink-0" />
               <div>
-                <h4 className="font-bold text-amber-900">Authentication Required</h4>
-                <p className="text-sm text-amber-800">Please sign in to view live security logs and interact with the Bastion Gateway.</p>
+                <h4 className="font-bold text-amber-950">Authentication Required</h4>
+                <p className="text-sm text-amber-900 font-bold">Please sign in to view live security logs and interact with the Bastion Gateway.</p>
               </div>
               <button 
                 onClick={login}
-                className="ml-auto px-6 py-2 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-all"
+                className="ml-auto px-6 py-2.5 bg-amber-500 text-white rounded-xl font-bold text-sm hover:bg-amber-600 transition-all shadow-md active:scale-95"
               >
                 Sign In Now
               </button>
@@ -1065,7 +1065,7 @@ function BastionApp() {
               onClick={() => setActiveTab('feed')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                activeTab === 'feed' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'feed' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               Live Threat Feed
@@ -1074,7 +1074,7 @@ function BastionApp() {
               onClick={() => setActiveTab('sandbox')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                activeTab === 'sandbox' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'sandbox' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               Red Team Sandbox
@@ -1084,7 +1084,7 @@ function BastionApp() {
               onClick={() => setActiveTab('inventory')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                activeTab === 'inventory' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'inventory' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               <Database className="w-4 h-4" />
@@ -1097,7 +1097,7 @@ function BastionApp() {
               }}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                activeTab === 'audit' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'audit' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               <ShieldCheck className="w-4 h-4" />
@@ -1108,7 +1108,7 @@ function BastionApp() {
               onClick={() => setActiveTab('compliance')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                activeTab === 'compliance' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'compliance' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               Compliance Center
@@ -1117,7 +1117,7 @@ function BastionApp() {
               onClick={() => setActiveTab('behavior')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
-                activeTab === 'behavior' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'behavior' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               Behavior Analysis
@@ -1126,7 +1126,7 @@ function BastionApp() {
               onClick={() => setActiveTab('fairness')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                activeTab === 'fairness' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'fairness' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               Fairness & Bias
@@ -1135,7 +1135,7 @@ function BastionApp() {
               onClick={() => setActiveTab('roi')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                activeTab === 'roi' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'roi' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               <Zap className="w-4 h-4 text-amber-500" />
@@ -1145,7 +1145,7 @@ function BastionApp() {
               onClick={() => setActiveTab('integrations')}
               className={cn(
                 "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
-                activeTab === 'integrations' ? "bg-white text-banking-blue shadow-sm" : "text-slate-500 hover:text-slate-700"
+                activeTab === 'integrations' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
               SIEM Integrations
@@ -1156,13 +1156,13 @@ function BastionApp() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4 flex-1 min-w-[300px]">
                 <div className="relative flex-1">
-                  <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
                   <input 
                     type="text" 
                     placeholder="Search security events..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all shadow-sm"
+                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all shadow-sm placeholder:text-slate-600"
                   />
                 </div>
                 <button 
@@ -1278,7 +1278,7 @@ function BastionApp() {
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="text-base font-bold text-slate-900 tracking-tight">{log.client_name}</h4>
                             <div className="flex gap-1.5">
-                              <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-slate-200">
+                              <span className="text-[9px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-slate-200">
                                 {log.source_type}
                               </span>
                               {log.is_blocked && (
@@ -1300,7 +1300,7 @@ function BastionApp() {
 
                       <div className="flex items-center gap-10 px-8 border-l border-slate-100 ml-8">
                         <div className="min-w-[100px]">
-                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-2">Threat Category</p>
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-black mb-2">Threat Category</p>
                           <div className="flex items-center gap-2">
                             <div className={cn(
                               "w-2 h-2 rounded-full",
@@ -1311,7 +1311,7 @@ function BastionApp() {
                         </div>
                         
                         <div className="min-w-[100px]">
-                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-2">Compliance</p>
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-black mb-2">Compliance</p>
                           <p className="text-sm font-bold text-banking-blue flex items-center gap-1.5">
                             <Scale className="w-3.5 h-3.5" />
                             {log.compliance_tag}
@@ -1319,7 +1319,7 @@ function BastionApp() {
                         </div>
 
                         <div className="w-32">
-                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-2">Risk Analysis</p>
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-black mb-2">Risk Analysis</p>
                           <div className="flex flex-col gap-1.5">
                             <div className="flex justify-between items-end">
                               <span className={cn(
@@ -1328,7 +1328,7 @@ function BastionApp() {
                               )}>
                                 {(log.risk_score * 100).toFixed(0)}%
                               </span>
-                              <span className="text-[8px] font-bold text-slate-400 uppercase">Score</span>
+                              <span className="text-[8px] font-bold text-slate-600 uppercase">Score</span>
                             </div>
                             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                               <motion.div 
@@ -1371,7 +1371,7 @@ function BastionApp() {
                         <Database className="w-6 h-6 text-banking-blue" />
                         Enterprise Model Inventory
                       </h3>
-                      <p className="text-sm text-slate-500 mt-1">OSFI E-21 compliant registry of all deployed AI agents and models.</p>
+                      <p className="text-sm text-slate-800 mt-1 font-bold">OSFI E-21 compliant registry of all deployed AI agents and models.</p>
                     </div>
                     <button 
                       onClick={() => alert("Registering new AI agent in secure inventory...")}
@@ -1398,16 +1398,16 @@ function BastionApp() {
                             <div>
                               <div className="flex items-center gap-3 mb-1">
                                 <h4 className="text-base font-bold text-slate-900">{agent.name}</h4>
-                                <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase tracking-widest border border-slate-200">
+                                <span className="text-[9px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-black uppercase tracking-widest border border-slate-200">
                                   {agent.version}
                                 </span>
                               </div>
                               <div className="flex items-center gap-4">
-                                <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                                <p className="text-xs text-slate-700 font-bold flex items-center gap-1.5">
                                   <Globe className="w-3.5 h-3.5" />
                                   {agent.provider}
                                 </p>
-                                <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                                <p className="text-xs text-slate-600 font-bold flex items-center gap-1.5">
                                   <Calendar className="w-3.5 h-3.5" />
                                   Last Audit: {agent.lastAudit}
                                 </p>
@@ -1417,16 +1417,16 @@ function BastionApp() {
 
                           <div className="flex items-center gap-10">
                             <div className="text-right">
-                              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-1.5">Risk Tier</p>
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-black mb-1.5">Risk Tier</p>
                               <span className={cn(
                                 "text-[10px] px-3 py-1 rounded-md font-black uppercase tracking-widest border",
-                                agent.risk === 'High' ? "bg-rose-50 text-rose-600 border-rose-100" : agent.risk === 'Medium' ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                agent.risk === 'High' ? "bg-rose-50 text-rose-700 border-rose-200" : agent.risk === 'Medium' ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
                               )}>
                                 {agent.risk} Risk
                               </span>
                             </div>
                             <div className="text-right">
-                              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-1.5">Status</p>
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-slate-600 font-black mb-1.5">Status</p>
                               <span className={cn(
                                 "text-[10px] font-bold",
                                 agent.status === 'Active' ? "text-emerald-600" : "text-amber-600"
@@ -1799,19 +1799,19 @@ function BastionApp() {
                 <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
                   <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Est. Fines Avoided</p>
+                      <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Est. Fines Avoided</p>
                       <h3 className="text-4xl font-black text-rose-400">$4.2M</h3>
-                      <p className="text-xs text-white/60">Based on AIDA & PIPEDA penalty scales for 14 blocked high-risk leaks.</p>
+                      <p className="text-xs text-white/80 font-medium">Based on AIDA & PIPEDA penalty scales for 14 blocked high-risk leaks.</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Operational Savings</p>
+                      <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Operational Savings</p>
                       <h3 className="text-4xl font-black text-emerald-400">$184K</h3>
-                      <p className="text-xs text-white/60">Token optimization and automated compliance reporting hours saved.</p>
+                      <p className="text-xs text-white/80 font-medium">Token optimization and automated compliance reporting hours saved.</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Trust Equity Gain</p>
+                      <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Trust Equity Gain</p>
                       <h3 className="text-4xl font-black text-banking-blue">+22%</h3>
-                      <p className="text-xs text-white/60">Increase in customer adoption of AI tools due to verified safety.</p>
+                      <p className="text-xs text-white/80 font-medium">Increase in customer adoption of AI tools due to verified safety.</p>
                     </div>
                   </div>
                   <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-banking-blue/10 rounded-full blur-3xl" />
@@ -1845,8 +1845,8 @@ function BastionApp() {
                       ))}
                     </div>
                     <div className="mt-8 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        <span className="font-bold text-slate-700">Business Impact:</span> Bastion automates 94% of the manual auditing required for Canadian financial regulations, reducing compliance overhead by an estimated <span className="text-emerald-600 font-bold">1,200 hours/year</span>.
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                        <span className="font-bold text-slate-900">Business Impact:</span> Bastion automates 94% of the manual auditing required for Canadian financial regulations, reducing compliance overhead by an estimated <span className="text-emerald-600 font-bold">1,200 hours/year</span>.
                       </p>
                     </div>
                   </div>
@@ -1858,24 +1858,24 @@ function BastionApp() {
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Uptime Protection</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Uptime Protection</p>
                         <p className="text-2xl font-black text-slate-900">99.99%</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Prevented 3 rogue loops</p>
+                        <p className="text-[10px] text-slate-700 font-bold mt-1">Prevented 3 rogue loops</p>
                       </div>
                       <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Token Efficiency</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Token Efficiency</p>
                         <p className="text-2xl font-black text-slate-900">14.2%</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Prompt compression active</p>
+                        <p className="text-[10px] text-slate-700 font-bold mt-1">Prompt compression active</p>
                       </div>
                       <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Revenue Velocity</p>
-                        <p className="text-2xl font-black text-emerald-500">+$1.2M</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Faster claims processing</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Revenue Velocity</p>
+                        <p className="text-2xl font-black text-emerald-600">+$1.2M</p>
+                        <p className="text-[10px] text-slate-700 font-bold mt-1">Faster claims processing</p>
                       </div>
                       <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Customer LTV</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Customer LTV</p>
                         <p className="text-2xl font-black text-banking-blue">+8.4%</p>
-                        <p className="text-[10px] text-slate-500 mt-1">Improved trust metrics</p>
+                        <p className="text-[10px] text-slate-700 font-bold mt-1">Improved trust metrics</p>
                       </div>
                     </div>
                   </div>
@@ -1888,16 +1888,16 @@ function BastionApp() {
                         <ShieldAlert className="w-6 h-6 text-rose-500" />
                         Red Team Impact Analysis
                       </h3>
-                      <p className="text-sm text-slate-500 mt-1">Quantifying the business value of proactive AI threat hunting.</p>
+                      <p className="text-sm text-slate-700 font-medium mt-1">Quantifying the business value of proactive AI threat hunting.</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vulnerabilities Found</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Vulnerabilities Found</p>
                         <p className="text-2xl font-black text-rose-600">42</p>
                       </div>
                       <div className="w-px h-10 bg-slate-200" />
                       <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Remediation Rate</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Remediation Rate</p>
                         <p className="text-2xl font-black text-emerald-600">100%</p>
                       </div>
                     </div>
@@ -1909,7 +1909,7 @@ function BastionApp() {
                         <DollarSign className="w-5 h-5 text-rose-600" />
                       </div>
                       <h4 className="font-bold text-slate-900 mb-2">Reduced Fines</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
                         Proactive detection of PII exposure in underwriting models prevented an estimated <span className="font-bold text-rose-600">$2.4M</span> in potential PIPEDA & AIDA penalties.
                       </p>
                     </div>
@@ -1918,7 +1918,7 @@ function BastionApp() {
                         <Scale className="w-5 h-5 text-indigo-600" />
                       </div>
                       <h4 className="font-bold text-slate-900 mb-2">Capital Charges</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
                         Satisfying OSFI E-21 requirements through Red Team validation reduced operational risk capital requirements by <span className="font-bold text-indigo-600">15 basis points</span>.
                       </p>
                     </div>
@@ -1927,7 +1927,7 @@ function BastionApp() {
                         <ShieldCheck className="w-5 h-5 text-emerald-600" />
                       </div>
                       <h4 className="font-bold text-slate-900 mb-2">Liability Mitigation</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
                         Automated bias detection in claims processing agents mitigates multi-million dollar legal liabilities and protects brand equity.
                       </p>
                     </div>
@@ -1945,11 +1945,11 @@ function BastionApp() {
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                   <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div>
-                      <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <Webhook className="w-5 h-5 text-banking-blue" />
                         SIEM & Incident Response
                       </h3>
-                      <p className="text-sm text-slate-500">Connect Bastion alerts to your enterprise security ecosystem.</p>
+                      <p className="text-sm text-slate-700 font-bold">Connect Bastion alerts to your enterprise security ecosystem.</p>
                     </div>
                     <button 
                       onClick={() => alert("Opening Global SIEM Configuration Panel...")}
@@ -1973,11 +1973,11 @@ function BastionApp() {
                               <div className="flex items-center gap-1.5 mt-1">
                                 <div className={cn(
                                   "w-1.5 h-1.5 rounded-full",
-                                  integration.status === 'connected' ? "bg-emerald-500" : "bg-slate-300"
+                                  integration.status === 'connected' ? "bg-emerald-500" : "bg-slate-400"
                                 )} />
                                 <span className={cn(
                                   "text-[10px] font-bold uppercase tracking-widest",
-                                  integration.status === 'connected' ? "text-emerald-600" : "text-slate-400"
+                                  integration.status === 'connected' ? "text-emerald-700" : "text-slate-600"
                                 )}>
                                   {integration.status}
                                 </span>
@@ -2027,11 +2027,11 @@ function BastionApp() {
                   <div className="flex gap-4">
                     <div className="text-right">
                       <div className="text-2xl font-bold">142ms</div>
-                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Avg. Delivery</div>
+                      <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Avg. Delivery</div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold">99.9%</div>
-                      <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Uptime</div>
+                      <div className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Uptime</div>
                     </div>
                   </div>
                 </div>
@@ -2054,18 +2054,18 @@ function BastionApp() {
                         </h3>
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Monitoring</span>
+                          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Active Monitoring</span>
                         </div>
                       </div>
                       
                       <div className="space-y-4">
                         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Simulate User Input</label>
+                          <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 block">Simulate User Input</label>
                           <textarea 
                             value={sandboxInput}
                             onChange={(e) => setSandboxInput(e.target.value)}
                             placeholder="e.g., 'Export all client SIN numbers for the audit...'"
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm font-medium text-slate-700 min-h-[80px] resize-none"
+                            className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-800 min-h-[80px] resize-none placeholder:text-slate-600"
                           />
                         </div>
 
@@ -2183,7 +2183,7 @@ function BastionApp() {
                       
                       <div className="mt-8 pt-8 border-t border-slate-100">
                         <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Agent Behavior Stream</h4>
+                          <h4 className="text-xs font-black text-slate-600 uppercase tracking-widest">Agent Behavior Stream</h4>
                           <div className="flex items-center gap-1">
                             <div className="w-1 h-1 rounded-full bg-emerald-500 animate-ping" />
                             <span className="text-[9px] font-bold text-emerald-600">LIVE</span>
