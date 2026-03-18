@@ -69,6 +69,7 @@ import {
   orderBy, 
   onSnapshot, 
   addDoc, 
+  setDoc,
   serverTimestamp, 
   Timestamp,
   doc,
@@ -228,6 +229,7 @@ export default function App() {
 
 function BastionApp() {
   const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<'admin' | 'user' | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -305,8 +307,27 @@ function BastionApp() {
   const [filterStatus, setFilterStatus] = useState('All Statuses');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        // Fetch role from Firestore
+        try {
+          const userDoc = await getDocFromServer(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setRole(userDoc.data().role);
+          } else {
+            // Default to user role if not found
+            // For demo purposes, the first user could be an admin
+            // But here we'll just set it to 'user' and let them be promoted
+            setRole('user');
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setRole('user');
+        }
+      } else {
+        setRole(null);
+      }
       setIsAuthReady(true);
     });
     return () => unsubscribe();
@@ -598,6 +619,22 @@ function BastionApp() {
     }
   };
 
+  const promoteToAdmin = async () => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'users', user.uid), {
+        role: 'admin',
+        email: user.email,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      setRole('admin');
+      alert("You have been promoted to Admin! (Demo Mode)");
+    } catch (error) {
+      console.error("Error promoting to admin:", error);
+      alert("Failed to promote to admin. Check Firestore rules.");
+    }
+  };
+
   const simulateAttack = async () => {
     if (!user) return;
     const prompts = [
@@ -683,6 +720,28 @@ function BastionApp() {
         </div>
 
         <div className="flex items-center gap-8">
+          {/* Role Badge */}
+          {user && (
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border",
+                role === 'admin' 
+                  ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
+                  : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+              )}>
+                {role || 'User'}
+              </div>
+              {role === 'user' && (
+                <button 
+                  onClick={promoteToAdmin}
+                  className="text-[8px] text-white/40 hover:text-white underline uppercase tracking-tighter"
+                >
+                  Demo: Promote
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Client Selector */}
           <div className="relative">
             <div 
@@ -801,80 +860,123 @@ function BastionApp() {
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full grid grid-cols-12 gap-8">
         {/* Sidebar / Stats */}
         <div className="col-span-12 lg:col-span-3 space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <button 
-                onClick={simulateAttack}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-700">Simulate Interaction</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
-              </button>
-              
-              <button 
-                onClick={seedDemoData}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
-                    <Database className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-700">Seed Demo Data</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
-              </button>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Management Actions</h3>
+              <div className="flex gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+              </div>
+            </div>
+            <div className="p-4 space-y-3">
+              {role === 'admin' ? (
+                <>
+                  <button 
+                    onClick={simulateAttack}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98] relative overflow-hidden"
+                  >
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
+                        <Activity className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Simulate Interaction</span>
+                    </div>
+                    <ChevronRight className="relative z-10 w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-banking-blue/0 to-banking-blue/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                  
+                  <button 
+                    onClick={seedDemoData}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98] relative overflow-hidden"
+                  >
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
+                        <Database className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Seed Demo Data</span>
+                    </div>
+                    <ChevronRight className="relative z-10 w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-banking-blue/0 to-banking-blue/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
 
-              <button 
-                onClick={runShadowAIScan}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
-                    <Search className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-semibold text-slate-700">Shadow AI Discovery</span>
+                  <button 
+                    onClick={runShadowAIScan}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all border border-slate-200 group active:scale-[0.98] relative overflow-hidden"
+                  >
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100 group-hover:text-banking-blue transition-colors">
+                        <Search className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">Shadow AI Discovery</span>
+                    </div>
+                    {isScanningShadowAI ? (
+                      <span className="relative z-10 w-4 h-4 border-2 border-banking-blue/30 border-t-banking-blue rounded-full animate-spin" />
+                    ) : (
+                      <ChevronRight className="relative z-10 w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-banking-blue/0 to-banking-blue/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                </>
+              ) : (
+                <div className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
+                  <Lock className="w-5 h-5 text-slate-300 mx-auto mb-2" />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Privileges Required</p>
                 </div>
-                {isScanningShadowAI ? (
-                  <span className="w-4 h-4 border-2 border-banking-blue/30 border-t-banking-blue rounded-full animate-spin" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
-                )}
-              </button>
+              )}
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">System Status</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Lakera Guard</span>
-                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  ACTIVE
-                </span>
+          <div className="bg-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5">
+              <Activity className="w-24 h-24 text-white" />
+            </div>
+            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-6 relative z-10">System Status</h3>
+            <div className="space-y-5 relative z-10">
+              <div className="flex justify-between items-center group cursor-help">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                  <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">Lakera Guard</span>
+                </div>
+                <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">ACTIVE</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Firestore</span>
-                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  CONNECTED
-                </span>
+              <div className="flex justify-between items-center group cursor-help">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                  <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">Firestore DB</span>
+                </div>
+                <span className="text-[9px] font-black text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">STABLE</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Agent Monitor</span>
+              <div className="flex justify-between items-center group cursor-help">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.6)]",
+                    isKilled ? "bg-rose-500" : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
+                  )} />
+                  <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">Agent Monitor</span>
+                </div>
                 <span className={cn(
-                  "flex items-center gap-1.5 text-xs font-bold",
-                  isKilled ? "text-rose-600" : "text-emerald-600"
+                  "text-[9px] font-black px-2 py-0.5 rounded border",
+                  isKilled 
+                    ? "text-rose-400 bg-rose-400/10 border-rose-400/20" 
+                    : "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
                 )}>
-                  <div className={cn("w-1.5 h-1.5 rounded-full", isKilled ? "bg-rose-500" : "bg-emerald-500 animate-pulse")} />
                   {isKilled ? "OFFLINE" : "ONLINE"}
                 </span>
+              </div>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-white/5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Traffic Load</span>
+                <span className="text-[9px] font-bold text-white/60">Nominal</span>
+              </div>
+              <div className="flex gap-1 h-1">
+                {[...Array(12)].map((_, i) => (
+                  <div key={i} className={cn(
+                    "flex-1 rounded-full",
+                    i < 8 ? "bg-emerald-500/40" : "bg-white/5"
+                  )} />
+                ))}
               </div>
             </div>
           </div>
@@ -970,91 +1072,64 @@ function BastionApp() {
             </button>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[240px]">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search logs..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all"
-                />
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Search security events..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all shadow-sm"
+                  />
+                </div>
+                <button 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterCategory('All Categories');
+                    setFilterCompliance('All Compliance');
+                    setFilterClient('All Clients');
+                    setFilterStatus('All Statuses');
+                  }}
+                  className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-rose-500 transition-all shadow-sm hover:shadow-md active:scale-95"
+                  title="Clear all filters"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Category</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1">Threat Category</span>
                   <select 
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[140px]"
+                    className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all min-w-[160px] cursor-pointer appearance-none shadow-sm"
                   >
                     {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
                 </div>
 
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Compliance</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5 ml-1">Compliance</span>
                   <select 
                     value={filterCompliance}
                     onChange={(e) => setFilterCompliance(e.target.value)}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[140px]"
+                    className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-banking-blue/5 transition-all min-w-[160px] cursor-pointer appearance-none shadow-sm"
                   >
                     {uniqueCompliance.map(tag => <option key={tag} value={tag}>{tag}</option>)}
                   </select>
                 </div>
 
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Client</span>
-                  <select 
-                    value={filterClient}
-                    onChange={(e) => setFilterClient(e.target.value)}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[140px]"
-                  >
-                    {uniqueClients.map(client => <option key={client} value={client}>{client}</option>)}
-                  </select>
-                </div>
-
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Status</span>
-                  <select 
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-banking-blue/20 transition-all min-w-[120px]"
-                  >
-                    {['All Statuses', 'Blocked', 'Allowed'].map(status => <option key={status} value={status}>{status}</option>)}
-                  </select>
-                </div>
-
-                <div className="flex flex-col justify-end">
-                  <div className="h-5" /> {/* Spacer for label alignment */}
-                  <button 
-                    onClick={() => {
-                      setSearchTerm('');
-                      setFilterCategory('All Categories');
-                      setFilterCompliance('All Compliance');
-                      setFilterClient('All Clients');
-                      setFilterStatus('All Statuses');
-                    }}
-                    className="p-2 text-slate-400 hover:text-rose-500 transition-colors"
-                    title="Clear all filters"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="flex flex-col justify-end">
-                  <div className="h-5" /> {/* Spacer for label alignment */}
-                  <button 
-                    onClick={() => alert("Exporting security audit report in PDF format...")}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </button>
-                </div>
+                <button 
+                  onClick={() => alert("Exporting security audit report in PDF format...")}
+                  className="mt-5 flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Audit
+                </button>
               </div>
             </div>
           </div>
@@ -1099,63 +1174,102 @@ function BastionApp() {
                       layout
                       key={log.id}
                       className={cn(
-                        "bg-white rounded-2xl p-5 border shadow-sm flex items-center justify-between transition-all hover:shadow-md",
-                        log.is_blocked ? "border-rose-100 bg-rose-50/30" : "border-slate-100"
+                        "bg-white rounded-3xl p-6 border shadow-sm flex items-center justify-between transition-all hover:shadow-xl hover:border-slate-300 group relative overflow-hidden",
+                        log.is_blocked ? "border-rose-100 bg-rose-50/10" : "border-slate-100"
                       )}
                     >
-                      <div className="flex items-center gap-4">
+                      {/* Status Indicator Bar */}
+                      <div className={cn(
+                        "absolute left-0 top-0 bottom-0 w-1.5",
+                        log.is_blocked ? "bg-rose-500" : "bg-emerald-500"
+                      )} />
+
+                      <div className="flex items-center gap-6 flex-1">
                         <div className={cn(
-                          "p-3 rounded-xl",
-                          log.is_blocked ? "bg-rose-100 text-rose-600" : "bg-emerald-100 text-emerald-600"
+                          "w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner border transition-transform group-hover:scale-110",
+                          log.is_blocked 
+                            ? "bg-rose-50 text-rose-600 border-rose-100" 
+                            : "bg-emerald-50 text-emerald-600 border-emerald-100"
                         )}>
-                          {log.is_blocked ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                          {log.is_blocked ? <ShieldAlert className="w-7 h-7" /> : <ShieldCheck className="w-7 h-7" />}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-slate-800">{log.client_name}</h4>
-                            <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                              {log.source_type}
-                            </span>
-                            {log.is_blocked && (
-                              <span className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
-                                <AlertCircle className="w-3 h-3" />
-                                High Risk
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="text-base font-bold text-slate-900 tracking-tight">{log.client_name}</h4>
+                            <div className="flex gap-1.5">
+                              <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-black uppercase tracking-widest border border-slate-200">
+                                {log.source_type}
                               </span>
-                            )}
+                              {log.is_blocked && (
+                                <span className="text-[9px] bg-rose-500 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-rose-500/20">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Blocked
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-sm text-slate-500 line-clamp-1 italic">"{log.input_text}"</p>
+                          <div className="relative">
+                            <p className="text-sm text-slate-600 font-medium leading-relaxed line-clamp-2 italic pr-8">
+                              "{log.input_text}"
+                            </p>
+                            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-8">
-                        <div className="text-right">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Category</p>
-                          <p className="text-sm font-bold text-slate-700">{log.threat_category}</p>
+                      <div className="flex items-center gap-10 px-8 border-l border-slate-100 ml-8">
+                        <div className="min-w-[100px]">
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-2">Threat Category</p>
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full",
+                              log.is_blocked ? "bg-rose-500" : "bg-emerald-500"
+                            )} />
+                            <p className="text-sm font-bold text-slate-800">{log.threat_category}</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Compliance</p>
-                          <p className="text-sm font-bold text-banking-blue">{log.compliance_tag}</p>
+                        
+                        <div className="min-w-[100px]">
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-2">Compliance</p>
+                          <p className="text-sm font-bold text-banking-blue flex items-center gap-1.5">
+                            <Scale className="w-3.5 h-3.5" />
+                            {log.compliance_tag}
+                          </p>
                         </div>
-                        <div className="text-right w-24">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Risk Score</p>
-                          <div className="flex flex-col items-end gap-1">
-                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+
+                        <div className="w-32">
+                          <p className="text-[9px] uppercase tracking-[0.2em] text-slate-400 font-black mb-2">Risk Analysis</p>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between items-end">
+                              <span className={cn(
+                                "text-xs font-black tabular-nums",
+                                log.risk_score > 0.7 ? "text-rose-500" : log.risk_score > 0.3 ? "text-amber-500" : "text-emerald-500"
+                              )}>
+                                {(log.risk_score * 100).toFixed(0)}%
+                              </span>
+                              <span className="text-[8px] font-bold text-slate-400 uppercase">Score</span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${log.risk_score * 100}%` }}
                                 className={cn(
-                                  "h-full rounded-full",
+                                  "h-full rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]",
                                   log.risk_score > 0.7 ? "bg-rose-500" : log.risk_score > 0.3 ? "bg-amber-500" : "bg-emerald-500"
                                 )}
                               />
                             </div>
-                            <span className={cn(
-                              "text-xs font-bold tabular-nums",
-                              log.risk_score > 0.7 ? "text-rose-500" : log.risk_score > 0.3 ? "text-amber-500" : "text-emerald-500"
-                            )}>
-                              {(log.risk_score * 100).toFixed(0)}%
-                            </span>
                           </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-center">
+                          <button 
+                            onClick={() => alert(`Opening detailed forensic report for event ${log.id}...`)}
+                            className="p-2 rounded-xl bg-slate-50 text-slate-400 hover:bg-banking-blue hover:text-white transition-all border border-slate-100 active:scale-90"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -1791,22 +1905,78 @@ function BastionApp() {
                       </div>
                     </div>
 
-                    <div className="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Architecture Flow</h4>
-                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center">AI Agent</div>
-                          <span>INPUT</span>
+                    <div className="mt-8 p-8 bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden relative">
+                      {/* Background Accents */}
+                      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-banking-blue/10 blur-[100px] rounded-full" />
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[100px] rounded-full" />
+                      </div>
+
+                      <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-8 relative z-10">Architecture Flow</h4>
+                      
+                      <div className="flex items-center justify-between relative z-10">
+                        {/* Input Node */}
+                        <div className="flex flex-col items-center gap-4 group">
+                          <motion.div 
+                            whileHover={{ scale: 1.05 }}
+                            className="w-16 h-16 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center shadow-lg group-hover:border-slate-500 transition-colors"
+                          >
+                            <MessageSquare className="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" />
+                          </motion.div>
+                          <div className="text-center">
+                            <p className="text-[10px] font-bold text-white mb-0.5">AI AGENT</p>
+                            <p className="text-[8px] font-medium text-slate-500 uppercase tracking-wider">Input Source</p>
+                          </div>
                         </div>
-                        <ChevronRight className="w-4 h-4" />
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-10 h-10 bg-banking-blue text-white rounded-lg flex items-center justify-center">BASTION</div>
-                          <span>AUDIT</span>
+
+                        {/* Connection 1 */}
+                        <div className="flex-1 px-4 relative h-px bg-slate-800 mx-2">
+                          <motion.div 
+                            animate={{ left: ["0%", "100%"] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-banking-blue rounded-full blur-[2px] shadow-[0_0_8px_rgba(37,99,235,0.8)]"
+                          />
                         </div>
-                        <ChevronRight className="w-4 h-4" />
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-10 h-10 bg-white rounded-lg border border-slate-200 flex items-center justify-center">SIEM</div>
-                          <span>ALERT</span>
+
+                        {/* Bastion Node */}
+                        <div className="flex flex-col items-center gap-4 group">
+                          <motion.div 
+                            animate={{ 
+                              boxShadow: ["0 0 0px rgba(37,99,235,0)", "0 0 20px rgba(37,99,235,0.3)", "0 0 0px rgba(37,99,235,0)"] 
+                            }}
+                            transition={{ duration: 3, repeat: Infinity }}
+                            className="w-20 h-20 bg-banking-blue rounded-2xl flex items-center justify-center shadow-xl relative overflow-hidden"
+                          >
+                            <Shield className="w-10 h-10 text-white relative z-10" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+                          </motion.div>
+                          <div className="text-center">
+                            <p className="text-[10px] font-bold text-white mb-0.5 tracking-widest">BASTION</p>
+                            <p className="text-[8px] font-medium text-banking-blue uppercase tracking-wider">Security Audit</p>
+                          </div>
+                        </div>
+
+                        {/* Connection 2 */}
+                        <div className="flex-1 px-4 relative h-px bg-slate-800 mx-2">
+                          <motion.div 
+                            animate={{ left: ["0%", "100%"] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: 1 }}
+                            className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-emerald-500 rounded-full blur-[2px] shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                          />
+                        </div>
+
+                        {/* SIEM Node */}
+                        <div className="flex flex-col items-center gap-4 group">
+                          <motion.div 
+                            whileHover={{ scale: 1.05 }}
+                            className="w-16 h-16 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center shadow-lg group-hover:border-slate-500 transition-colors"
+                          >
+                            <Activity className="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" />
+                          </motion.div>
+                          <div className="text-center">
+                            <p className="text-[10px] font-bold text-white mb-0.5">SIEM</p>
+                            <p className="text-[8px] font-medium text-slate-500 uppercase tracking-wider">Alerting</p>
+                          </div>
                         </div>
                       </div>
                     </div>
