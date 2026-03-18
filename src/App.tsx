@@ -2367,6 +2367,31 @@ function BastionApp() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
+                {/* Prominent Sandbox Search Bar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between px-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Global Sandbox Search</label>
+                    <span className="text-[9px] text-slate-400 font-bold">Filters guardrails & behavior logs</span>
+                  </div>
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-lg shadow-slate-200/50 flex items-center justify-between gap-4 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-banking-blue/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="relative flex-1">
+                    <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-banking-blue transition-colors" />
+                    <input 
+                      type="text"
+                      placeholder="Search sandbox logs, guardrails, and telemetry..."
+                      value={streamSearch}
+                      onChange={(e) => setStreamSearch(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-banking-blue/10 transition-all font-bold placeholder:text-slate-400 shadow-inner"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-100 rounded-xl border border-slate-200 relative z-10">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Sandbox Active</span>
+                  </div>
+                </div>
+              </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
@@ -2503,7 +2528,7 @@ function BastionApp() {
                           { name: "PII Entity Recognition (Presidio)", status: sandboxResult?.flagged ? "Blocked" : "Passed", time: "45ms" },
                           { name: "Financial Compliance (OSFI E-21)", status: "Passed", time: "22ms" },
                           { name: "Toxicity & Bias Filter", status: "Passed", time: "18ms" }
-                        ].map((guard, i) => (
+                        ].filter(g => g.name.toLowerCase().includes(streamSearch.toLowerCase())).map((guard, i) => (
                           <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                             <div className="flex items-center gap-3">
                               <div className={cn(
@@ -2534,16 +2559,6 @@ function BastionApp() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="relative">
-                              <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                              <input 
-                                type="text"
-                                placeholder="Filter stream..."
-                                value={streamSearch}
-                                onChange={(e) => setStreamSearch(e.target.value)}
-                                className="pl-8 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold focus:outline-none focus:ring-2 focus:ring-banking-blue/20 w-40"
-                              />
-                            </div>
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-lg">
                               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
                               <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Live Feed</span>
