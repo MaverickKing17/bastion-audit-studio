@@ -1421,28 +1421,146 @@ function BastionApp() {
                   </div>
                 </motion.div>
 
-                {filteredLogs.length === 0 ? (
-                  <div className="bg-white rounded-2xl p-20 text-center border border-dashed border-slate-300 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative z-10">
-                      <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-inner">
-                        <Database className="w-10 h-10 text-slate-200 animate-pulse" />
+                {/* Agent Behavior Stream - Always visible in Feed tab for live telemetry */}
+                <section className="bg-slate-950 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden relative group/terminal mb-6">
+                  {/* Terminal Header */}
+                  <div className="bg-slate-900/80 backdrop-blur-md px-6 py-4 border-b border-slate-800 flex items-center justify-between relative z-30">
+                    <div className="flex items-center gap-4">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-rose-500/20 border border-rose-500/40" />
+                        <div className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500/40" />
+                        <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40" />
                       </div>
-                      <h3 className="text-lg font-bold text-slate-800 mb-2">
+                      <div className="h-4 w-px bg-slate-800 mx-2" />
+                      <div>
+                        <h4 className="text-[10px] font-bold text-slate-200 uppercase tracking-wider">Agent Behavior Stream</h4>
+                        <p className="text-[9px] text-slate-500 font-medium tracking-wider">LIVE_GATEWAY_TELEMETRY</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-[9px] font-black text-emerald-400 animate-pulse">
+                        SYNC_ACTIVE
+                      </div>
+                      <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer">
+                        <Search className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terminal Body */}
+                  <article className="relative h-[320px] overflow-hidden bg-slate-950 p-6 font-mono text-[11px] leading-relaxed">
+                    {/* Scanning Line Animation */}
+                    <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-500/20 to-transparent animate-[scan_4s_linear_infinite] z-20 pointer-events-none" />
+                    
+                    {/* Data Stream Background */}
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-0 bg-[linear-gradient(rgba(15,23,42,0)_0%,rgba(56,189,248,0.2)_50%,rgba(15,23,42,0)_100%)] bg-[length:100%_4px] animate-[data-flow_10s_linear_infinite]" />
+
+                    <div className="relative z-10 space-y-1.5 no-scrollbar overflow-y-auto h-full pb-12">
+                      <AnimatePresence mode="popLayout">
+                        {filteredStreamLogs.map((log) => (
+                          <motion.div
+                            key={log.id}
+                            initial={{ opacity: 0, x: -15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            className="flex items-start gap-4 group/line py-0.5"
+                          >
+                            <span className="text-slate-600 shrink-0 select-none font-medium">[{log.time}]</span>
+                            <span className={cn(
+                              "font-black shrink-0 min-w-[80px] tracking-tighter",
+                              log.status === 'info' ? "text-sky-400 drop-shadow-[0_0_2px_rgba(56,189,248,0.3)]" :
+                              log.status === 'check' ? "text-amber-400 drop-shadow-[0_0_2px_rgba(251,191,36,0.3)]" :
+                              log.status === 'ok' ? "text-emerald-400 drop-shadow-[0_0_2px_rgba(52,211,153,0.3)]" :
+                              "text-rose-400 drop-shadow-[0_0_2px_rgba(248,113,113,0.3)]"
+                            )}>
+                              [{log.type}]
+                            </span>
+                            <span className={cn(
+                              "break-all font-medium",
+                              log.status === 'ok' ? "text-emerald-300" : 
+                              log.status === 'alert' ? "text-rose-300" :
+                              "text-slate-200"
+                            )}>
+                              {log.message}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                      
+                      {sandboxResult?.flagged && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-start gap-4 text-rose-400 font-black bg-rose-500/10 p-3 rounded-xl border border-rose-500/30 shadow-[0_0_20px_rgba(244,63,94,0.1)] mt-4"
+                        >
+                          <span className="shrink-0 select-none opacity-60">[{new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}]</span>
+                          <span className="shrink-0 min-w-[80px]">[ALERT]</span>
+                          <span className="tracking-tight uppercase">SECURITY VIOLATION DETECTED: {sandboxResult.category}</span>
+                        </motion.div>
+                      )}
+                    </div>
+                    
+                    {/* Bottom fade */}
+                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none z-20" />
+                  </article>
+                  
+                  <div className="mt-4 flex items-center justify-between text-[10px] font-bold text-slate-400 px-2 pb-4">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400 shadow-[0_0_5px_rgba(56,189,248,0.5)]" /> MONITOR
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.5)]" /> CHECK
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.5)]" /> OK
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 opacity-60">
+                      <Terminal className="w-3 h-3" />
+                      <span className="uppercase tracking-widest">Bastion Kernel v4.2.0-stable</span>
+                    </div>
+                  </div>
+                </section>
+
+                {filteredLogs.length === 0 ? (
+                  <div className="bg-white rounded-3xl p-16 text-center border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-50 via-transparent to-transparent opacity-50" />
+                    
+                    {/* Scanning Line Animation for Empty State */}
+                    <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-banking-blue/10 to-transparent animate-[scan_3s_linear_infinite] z-0" />
+
+                    <div className="relative z-10">
+                      <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-slate-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] group-hover:scale-110 transition-transform duration-500">
+                        <div className="relative">
+                          <Database className="w-12 h-12 text-slate-300" />
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border-2 border-white animate-pulse" />
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight">
                         {searchTerm ? "No matching logs found" : "Awaiting Security Events"}
                       </h3>
-                      <p className="text-slate-400 font-medium max-w-xs mx-auto mb-8">
+                      
+                      <p className="text-slate-500 font-medium max-w-sm mx-auto mb-10 leading-relaxed">
                         {searchTerm 
-                          ? `We couldn't find any logs matching "${searchTerm}". Try a different search term.`
-                          : "The Bastion Gateway is active and monitoring all AI agent interactions. No threats detected in the current session."}
+                          ? `The gateway couldn't find any logs matching "${searchTerm}". Try refining your search parameters.`
+                          : "The Bastion Interception Gateway is active and monitoring all AI agent interactions. No threats detected in the current session."}
                       </p>
+                      
                       {!searchTerm && (
-                        <button 
-                          onClick={simulateAttack}
-                          className="px-6 py-2.5 bg-banking-blue text-white rounded-xl font-bold text-sm hover:bg-banking-blue/90 transition-all shadow-lg shadow-banking-blue/20 active:scale-95"
-                        >
-                          Generate Demo Activity
-                        </button>
+                        <div className="flex flex-col items-center gap-4">
+                          <button 
+                            onClick={simulateAttack}
+                            className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20 active:scale-95 flex items-center gap-2"
+                          >
+                            <Zap className="w-4 h-4 text-amber-400" />
+                            Generate Demo Activity
+                          </button>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                            System Status: <span className="text-emerald-500">Nominal</span>
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1994,25 +2112,32 @@ function BastionApp() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
-                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl border border-white/5 group/roi-main">
+                  {/* Background Effects */}
+                  <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-900/40 z-0" />
+                  
+                  {/* Animated Scanning Line */}
+                  <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent top-0 animate-[scan_6s_linear_infinite] pointer-events-none z-10" />
+
                   <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Est. Fines Avoided</p>
-                      <h3 className="text-4xl font-black text-rose-400">$4.2M</h3>
-                      <p className="text-xs text-white/80 font-medium">Based on AIDA & PIPEDA penalty scales for 14 blocked high-risk leaks.</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Operational Savings</p>
-                      <h3 className="text-4xl font-black text-emerald-400">$184K</h3>
-                      <p className="text-xs text-white/80 font-medium">Token optimization and automated compliance reporting hours saved.</p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">Trust Equity Gain</p>
-                      <h3 className="text-4xl font-black text-banking-blue">+22%</h3>
-                      <p className="text-xs text-white/80 font-medium">Increase in customer adoption of AI tools due to verified safety.</p>
-                    </div>
+                    <motion.div whileHover={{ y: -2 }} className="space-y-2 p-4 rounded-2xl hover:bg-white/5 transition-colors">
+                      <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">Est. Fines Avoided</p>
+                      <h3 className="text-4xl font-black text-rose-400 drop-shadow-[0_0_15px_rgba(244,63,94,0.3)]">$4.2M</h3>
+                      <p className="text-xs text-white/60 font-medium">Based on AIDA & PIPEDA penalty scales for 14 blocked high-risk leaks.</p>
+                    </motion.div>
+                    <motion.div whileHover={{ y: -2 }} className="space-y-2 p-4 rounded-2xl hover:bg-white/5 transition-colors">
+                      <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">Operational Savings</p>
+                      <h3 className="text-4xl font-black text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.3)]">$184K</h3>
+                      <p className="text-xs text-white/60 font-medium">Token optimization and automated compliance reporting hours saved.</p>
+                    </motion.div>
+                    <motion.div whileHover={{ y: -2 }} className="space-y-2 p-4 rounded-2xl hover:bg-white/5 transition-colors">
+                      <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">Trust Equity Gain</p>
+                      <h3 className="text-4xl font-black text-banking-blue drop-shadow-[0_0_15px_rgba(79,70,229,0.3)]">+22%</h3>
+                      <p className="text-xs text-white/60 font-medium">Increase in customer adoption of AI tools due to verified safety.</p>
+                    </motion.div>
                   </div>
-                  <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-banking-blue/10 rounded-full blur-3xl" />
+                  <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-banking-blue/10 rounded-full blur-3xl animate-pulse" />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
