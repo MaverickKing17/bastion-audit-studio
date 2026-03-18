@@ -4,6 +4,21 @@
   --color-banking-blue: #002B45;
   --font-sans: "Segoe UI", "Tahoma", "Verdana", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Cascadia Code", "Consolas", "Courier New", ui-monospace, SFMono-Regular, monospace;
+
+  --keyframes-scan: {
+    0% { top: 0; opacity: 0; }
+    5% { opacity: 1; }
+    95% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  };
+  --keyframes-shimmer: {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  };
+  --keyframes-data-flow: {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% 100%; }
+  };
 }
 
 @layer base {

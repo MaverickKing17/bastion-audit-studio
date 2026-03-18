@@ -2513,43 +2513,75 @@ function BastionApp() {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200">
-                      <h4 className="text-sm font-bold mb-4 flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        Why this matters for ROI
-                      </h4>
-                      <ul className="space-y-4">
-                        <li className="flex gap-3">
-                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] flex-shrink-0">1</div>
-                          <p className="text-[11px] leading-relaxed opacity-90">
-                            <span className="font-bold">Avoid Fines:</span> Real-time PII blocking prevents PIPEDA violations which can cost up to $100k per occurrence.
-                          </p>
-                        </li>
-                        <li className="flex gap-3">
-                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] flex-shrink-0">2</div>
-                          <p className="text-[11px] leading-relaxed opacity-90">
-                            <span className="font-bold">Regulatory Capital:</span> Satisfying OSFI E-21 requirements through proactive testing can lower operational risk capital charges.
-                          </p>
-                        </li>
-                        <li className="flex gap-3">
-                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] flex-shrink-0">3</div>
-                          <p className="text-[11px] leading-relaxed opacity-90">
-                            <span className="font-bold">Liability Mitigation:</span> Intercepting biased underwriting logic prevents multi-million dollar class-action lawsuits and regulatory audits.
-                          </p>
-                        </li>
-                      </ul>
-                    </div>
+                    <motion.div 
+                      whileHover={{ y: -4, shadow: "0 25px 50px -12px rgba(79, 70, 229, 0.5)" }}
+                      className="bg-gradient-to-br from-indigo-600 via-indigo-600 to-indigo-800 rounded-3xl p-7 text-white shadow-2xl shadow-indigo-200/50 border border-white/10 transition-all duration-500 group relative overflow-hidden"
+                    >
+                      {/* Noise Texture Overlay */}
+                      <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')] z-0" />
+                      
+                      {/* Subtle Sheen Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                      
+                      {/* Inner Glow/Highlight */}
+                      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-white/30 via-transparent to-transparent" />
+                      <div className="absolute top-0 left-0 w-px h-full bg-gradient-to-b from-white/30 via-transparent to-transparent" />
 
-                    <div className="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Globe className="w-24 h-24 text-emerald-500" />
-                      </div>
-                      <div className="flex items-center justify-between mb-6 relative z-10">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Global Threat Intel Feed</h4>
+                      <h4 className="text-sm font-bold mb-6 flex items-center gap-2 relative z-10">
+                        <div className="p-1.5 bg-white/10 rounded-lg group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]">
+                          <Zap className="w-4 h-4 text-amber-300 fill-amber-300/20" />
                         </div>
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">SYNCED: {lastSync.toFixed(1)}s AGO</span>
+                        <span className="tracking-tight">Why this matters for ROI</span>
+                      </h4>
+                      <ul className="space-y-5 relative z-10">
+                        {[
+                          { id: 1, title: "Avoid Fines", desc: "Real-time PII blocking prevents PIPEDA violations which can cost up to $100k per occurrence." },
+                          { id: 2, title: "Regulatory Capital", desc: "Satisfying OSFI E-21 requirements through proactive testing can lower operational risk capital charges." },
+                          { id: 3, title: "Liability Mitigation", desc: "Intercepting biased underwriting logic prevents multi-million dollar class-action lawsuits." }
+                        ].map((item) => (
+                          <motion.li 
+                            key={item.id}
+                            whileHover={{ x: 4 }}
+                            className="flex gap-4 group/item p-3 rounded-2xl hover:bg-white/5 transition-all duration-300 border border-transparent hover:border-white/10"
+                          >
+                            <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-[10px] flex-shrink-0 font-black border border-white/20 group-hover/item:bg-indigo-400 group-hover/item:border-indigo-300 group-hover/item:scale-110 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] group-hover/item:shadow-indigo-500/40">
+                              {item.id}
+                            </div>
+                            <p className="text-[11px] leading-relaxed opacity-80 group-hover/item:opacity-100 transition-opacity">
+                              <span className="font-bold text-white block mb-0.5 group-hover/item:text-indigo-200 transition-colors">{item.title}:</span>
+                              {item.desc}
+                            </p>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </motion.div>
+
+                    <div className="bg-slate-900/95 backdrop-blur-xl rounded-3xl p-7 border border-slate-800/50 shadow-2xl relative overflow-hidden group/intel">
+                      {/* Grid Background Pattern */}
+                      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] z-0" />
+                      
+                      {/* Data Stream Background */}
+                      <div className="absolute inset-0 opacity-[0.05] pointer-events-none overflow-hidden z-0">
+                        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(16,185,129,0.2)_50%,transparent_100%)] bg-[length:100%_200%] animate-[data-flow_10s_linear_infinite]" />
+                      </div>
+
+                      {/* Scanning Line Animation */}
+                      <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent top-0 animate-[scan_4s_linear_infinite] pointer-events-none z-10" />
+
+                      <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/intel:opacity-25 transition-opacity duration-1000">
+                        <Globe className="w-28 h-28 text-emerald-500 animate-[pulse_6s_ease-in-out_infinite]" />
+                      </div>
+                      <div className="flex items-center justify-between mb-7 relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,1)]" />
+                            <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-30" />
+                          </div>
+                          <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-widest drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">Global Threat Intel Feed</h4>
+                        </div>
+                        <div className="flex items-center gap-2 px-2 py-0.5 bg-white/5 rounded border border-white/5 backdrop-blur-md">
+                          <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest animate-pulse">SYNCED: {lastSync.toFixed(1)}s AGO</span>
+                        </div>
                       </div>
                       
                       <div className="space-y-4 relative z-10">
@@ -2557,49 +2589,62 @@ function BastionApp() {
                           {threats.map((threat, i) => (
                             <motion.div 
                               key={`${threat.type}-${i}`}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: 20 }}
-                              className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all cursor-default group"
+                              initial={{ opacity: 0, x: -20, scale: 0.95 }}
+                              animate={{ opacity: 1, x: 0, scale: 1 }}
+                              exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                              whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.08)" }}
+                              className={cn(
+                                "flex items-center justify-between p-3.5 bg-white/[0.03] backdrop-blur-md rounded-2xl border border-white/[0.05] hover:border-white/[0.15] transition-all duration-300 cursor-default group/threat shadow-xl shadow-black/30",
+                                threat.severity === 'CRITICAL' && "border-rose-500/20 bg-rose-500/[0.02]"
+                              )}
                             >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-4">
                                 <div className={cn(
-                                  "w-1.5 h-1.5 rounded-full",
-                                  threat.severity === 'CRITICAL' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" :
-                                  threat.severity === 'HIGH' ? "bg-orange-500" : "bg-amber-500"
-                                )} />
+                                  "w-2 h-2 rounded-full relative",
+                                  threat.severity === 'CRITICAL' ? "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,1)]" :
+                                  threat.severity === 'HIGH' ? "bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.8)]" : "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)]"
+                                )}>
+                                  {threat.severity === 'CRITICAL' && (
+                                    <div className="absolute inset-0 rounded-full bg-rose-500 animate-ping opacity-50" />
+                                  )}
+                                </div>
                                 <div>
-                                  <p className="text-[10px] font-bold text-white group-hover:text-emerald-400 transition-colors">{threat.type}</p>
-                                  <p className="text-[9px] text-slate-500">Target: {threat.target}</p>
+                                  <p className="text-[11px] font-bold text-white group-hover/threat:text-emerald-400 transition-colors">{threat.type}</p>
+                                  <p className="text-[9px] text-slate-500 font-semibold">Target: {threat.target}</p>
                                 </div>
                               </div>
                               <div className="text-right">
                                 <span className={cn(
-                                  "text-[8px] font-black px-1.5 py-0.5 rounded",
-                                  threat.severity === 'CRITICAL' ? "bg-rose-500/20 text-rose-400" :
-                                  threat.severity === 'HIGH' ? "bg-orange-500/20 text-orange-400" : "bg-amber-500/20 text-amber-400"
+                                  "text-[9px] font-black px-2 py-0.5 rounded-md border shadow-inner",
+                                  threat.severity === 'CRITICAL' ? "bg-rose-500/20 text-rose-400 border-rose-500/30" :
+                                  threat.severity === 'HIGH' ? "bg-orange-500/20 text-orange-400 border-orange-500/30" : "bg-amber-500/20 text-amber-400 border-amber-500/30"
                                 )}>
                                   {threat.severity}
                                 </span>
-                                <p className="text-[8px] text-slate-600 mt-1">{threat.time}</p>
+                                <p className="text-[8px] text-slate-600 mt-1.5 font-black opacity-60">{threat.time}</p>
                               </div>
                             </motion.div>
                           ))}
                         </AnimatePresence>
                       </div>
                       
-                      <div className="mt-6 pt-6 border-t border-white/5">
-                        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
-                          <span>Active Honeypots</span>
-                          <span className="text-emerald-400">1,242</span>
+                      <div className="mt-7 pt-6 border-t border-white/5 relative z-10">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 mb-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,1)]" />
+                            <span className="tracking-tight">Active Honeypots</span>
+                          </div>
+                          <span className="text-emerald-400 font-black tracking-wider drop-shadow-[0_0_10px_rgba(52,211,153,0.6)]">1,242</span>
                         </div>
-                        <div className="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
+                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden p-[1px] border border-white/5">
                           <motion.div 
                             initial={{ width: "0%" }}
                             animate={{ width: "78%" }}
                             transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-                            className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                          />
+                            className="h-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-500 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)] relative"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_infinite]" />
+                          </motion.div>
                         </div>
                       </div>
                     </div>
