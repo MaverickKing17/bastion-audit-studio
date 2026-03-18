@@ -48,6 +48,8 @@ import { GoogleGenAI } from "@google/genai";
 import { 
   LineChart, 
   Line, 
+  AreaChart,
+  Area,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -477,6 +479,15 @@ function BastionApp() {
   const uniqueCategories = ['All Categories', ...Array.from(new Set(logs.map(l => l.threat_category)))];
   const uniqueCompliance = ['All Compliance', ...Array.from(new Set(logs.map(l => l.compliance_tag)))];
   const uniqueClients = ['All Clients', ...Array.from(new Set(logs.map(l => l.client_name)))];
+
+  const trendData = logs
+    .filter(log => selectedClient === 'All Departments' || log.client_name === selectedClient)
+    .slice(0, 15)
+    .reverse()
+    .map(log => ({
+      time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      score: Math.round(log.risk_score * 100)
+    }));
 
   const handleSandboxTest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1064,7 +1075,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('feed')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap shrink-0",
                 activeTab === 'feed' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1073,7 +1084,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('sandbox')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                 activeTab === 'sandbox' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1083,7 +1094,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('inventory')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                 activeTab === 'inventory' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1096,7 +1107,7 @@ function BastionApp() {
                 alert("Navigating to Vulnerability Audit Dashboard...");
               }}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                 activeTab === 'audit' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1107,7 +1118,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('compliance')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap shrink-0",
                 activeTab === 'compliance' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1116,7 +1127,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('behavior')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap shrink-0",
                 activeTab === 'behavior' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1125,7 +1136,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('fairness')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                 activeTab === 'fairness' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1134,7 +1145,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('roi')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                 activeTab === 'roi' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1144,7 +1155,7 @@ function BastionApp() {
             <button 
               onClick={() => setActiveTab('integrations')}
               className={cn(
-                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap shrink-0",
                 activeTab === 'integrations' ? "bg-white text-banking-blue shadow-sm" : "text-slate-700 hover:text-slate-900"
               )}
             >
@@ -1223,6 +1234,96 @@ function BastionApp() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-4"
               >
+                {/* Risk Score Trend Graph */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm overflow-hidden relative group"
+                >
+                  <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                    <Activity className="w-32 h-32 text-banking-blue" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-6 relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">Risk Score Trend</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">Real-time telemetry for <span className="text-banking-blue font-bold">{selectedClient}</span></p>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Posture</span>
+                      <div className={cn(
+                        "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border",
+                        stats.health_score > 80 ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                        stats.health_score > 50 ? "bg-amber-50 text-amber-600 border-amber-100" : 
+                        "bg-rose-50 text-rose-600 border-rose-100"
+                      )}>
+                        {stats.health_score > 80 ? 'Optimal' : stats.health_score > 50 ? 'Warning' : 'Critical'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-[180px] w-full relative z-10">
+                    {trendData.length > 1 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={trendData}>
+                          <defs>
+                            <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#1e3a8a" stopOpacity={0.1}/>
+                              <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                          <XAxis 
+                            dataKey="time" 
+                            hide 
+                          />
+                          <YAxis 
+                            domain={[0, 100]} 
+                            hide
+                          />
+                          <Tooltip 
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-slate-900 text-white p-3 rounded-xl shadow-2xl border border-slate-800 text-[10px] font-bold">
+                                    <p className="text-slate-400 mb-1">{payload[0].payload.time}</p>
+                                    <p className="flex items-center gap-2">
+                                      Risk Score: 
+                                      <span className={cn(
+                                        payload[0].value > 70 ? "text-rose-400" : payload[0].value > 30 ? "text-amber-400" : "text-emerald-400"
+                                      )}>
+                                        {payload[0].value}%
+                                      </span>
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="score" 
+                            stroke="#1e3a8a" 
+                            strokeWidth={3} 
+                            fillOpacity={1} 
+                            fill="url(#colorScore)"
+                            animationDuration={1500}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-3">
+                        <Activity className="w-8 h-8 opacity-20" />
+                        <p className="text-[10px] font-bold uppercase tracking-widest">Insufficient Data for Trend</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+
                 {filteredLogs.length === 0 ? (
                   <div className="bg-white rounded-2xl p-20 text-center border border-dashed border-slate-300 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
